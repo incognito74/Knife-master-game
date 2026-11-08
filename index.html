@@ -1,0 +1,2560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Knife Master 3D Style — Premium Arcade</title>
+  <meta name="description" content="Ultra-premium 3D-styled arcade knife throwing game with knife armory, custom blades, boss battles, trigonometry rotation physics, juicy apple slicing, and procedural audio synthesis." />
+  <meta property="og:title" content="Knife Master 3D Style" />
+  <meta property="og:description" content="Ultra-premium 3D-styled arcade knife throwing game with knife armory, custom blades, boss battles, trigonometry rotation physics, and juicy particle effects." />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #0b0705;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      touch-action: manipulation;
+    }
+
+    #game-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: radial-gradient(circle at 50% 25%, #2c1a11 0%, #150d09 55%, #070403 100%);
+      overflow: hidden;
+    }
+
+    #shake-wrapper {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    #game-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: crosshair;
+      pointer-events: auto;
+    }
+
+    /* Ambient atmospheric overlays */
+    .vignette-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(circle at center, transparent 40%, rgba(5, 3, 2, 0.45) 75%, rgba(0, 0, 0, 0.85) 100%);
+      box-shadow: inset 0 0 120px rgba(0, 0, 0, 0.85);
+    }
+
+    /* Top and Bottom Lighting Bars */
+    .ambient-glow-top {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 160px;
+      pointer-events: none;
+      background: radial-gradient(ellipse at 50% 0%, rgba(255, 140, 40, 0.16) 0%, transparent 70%);
+    }
+
+    /* Modern Glassmorphic HUD */
+    .hud-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: env(safe-area-inset-top, 14px) env(safe-area-inset-right, 14px) env(safe-area-inset-bottom, 16px) env(safe-area-inset-left, 14px);
+      z-index: 10;
+    }
+
+    .hud-top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 6px 4px;
+    }
+
+    .stage-cluster {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 3px;
+    }
+
+    .stage-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: linear-gradient(135deg, rgba(255, 175, 70, 0.22) 0%, rgba(120, 50, 15, 0.35) 100%);
+      border: 1px solid rgba(255, 195, 110, 0.4);
+      border-radius: 999px;
+      padding: 5px 14px;
+      color: #ffe0b2;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .stage-pill.boss {
+      background: linear-gradient(135deg, rgba(255, 40, 40, 0.35) 0%, rgba(140, 10, 10, 0.6) 100%);
+      border-color: rgba(255, 100, 100, 0.8);
+      color: #ffd1d1;
+      animation: bossPulse 1.3s infinite alternate;
+    }
+
+    @keyframes bossPulse {
+      from { box-shadow: 0 0 12px rgba(255, 50, 50, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25); }
+      to { box-shadow: 0 0 26px rgba(255, 50, 50, 0.85), 0 0 6px #ff3333; }
+    }
+
+    .score-banner {
+      font-size: 44px;
+      font-weight: 900;
+      color: #ffffff;
+      line-height: 1;
+      text-shadow: 0 3px 12px rgba(0, 0, 0, 0.9), 0 0 25px rgba(255, 170, 50, 0.35);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -1px;
+    }
+
+    .hud-controls-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .apple-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: linear-gradient(135deg, rgba(235, 45, 45, 0.25) 0%, rgba(110, 15, 15, 0.45) 100%);
+      border: 1px solid rgba(255, 100, 100, 0.45);
+      border-radius: 999px;
+      padding: 6px 14px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .apple-chip.bounce {
+      transform: scale(1.18);
+    }
+
+    .apple-icon {
+      width: 19px;
+      height: 19px;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+    }
+
+    .apple-value {
+      color: #fff0f0;
+      font-size: 15px;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .hud-round-btn {
+      pointer-events: auto;
+      background: rgba(42, 28, 20, 0.85);
+      border: 1px solid rgba(200, 145, 95, 0.35);
+      border-radius: 50%;
+      width: 38px;
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #f3dfcf;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+      transition: transform 0.12s, background 0.2s;
+    }
+
+    .hud-round-btn:hover {
+      background: rgba(65, 45, 30, 0.95);
+      color: #ffffff;
+    }
+
+    .hud-round-btn:active {
+      transform: scale(0.92);
+    }
+
+    /* Left Knife Inventory Ammo Column */
+    .hud-ammo-panel {
+      position: absolute;
+      left: 18px;
+      bottom: 24px;
+      display: flex;
+      flex-direction: column-reverse;
+      gap: 6px;
+      pointer-events: none;
+      filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.7));
+    }
+
+    .knife-ammo-slot {
+      width: 16px;
+      height: 34px;
+      transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.25s ease;
+    }
+
+    .knife-ammo-slot.spent {
+      opacity: 0.18;
+      filter: grayscale(1) brightness(0.35);
+      transform: scale(0.8) translateX(-3px);
+    }
+
+    /* Combo Banner Overlay */
+    .combo-banner {
+      position: absolute;
+      top: 15%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.5);
+      font-size: 28px;
+      font-weight: 900;
+      font-style: italic;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      background: linear-gradient(180deg, #fff7cc 0%, #ffc83b 50%, #ff6b08 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 4px 15px rgba(255, 140, 0, 0.75));
+      pointer-events: none;
+      opacity: 0;
+      transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.2s ease;
+      z-index: 30;
+    }
+
+    .combo-banner.active {
+      transform: translate(-50%, -50%) scale(1.15);
+      opacity: 1;
+    }
+
+    /* Stage Victory Toast Banner */
+    .victory-toast {
+      position: absolute;
+      top: 24%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.7);
+      background: linear-gradient(135deg, rgba(255, 175, 30, 0.95) 0%, rgba(210, 65, 0, 0.95) 100%);
+      border: 2px solid #fff1b8;
+      box-shadow: 0 12px 45px rgba(0, 0, 0, 0.8), 0 0 35px rgba(255, 150, 0, 0.6);
+      border-radius: 999px;
+      padding: 12px 36px;
+      color: #ffffff;
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.7);
+      pointer-events: none;
+      opacity: 0;
+      transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+      z-index: 45;
+    }
+
+    .victory-toast.show {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 1;
+    }
+
+    /* Modal Backdrop & Cards */
+    .modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(8, 5, 3, 0.8);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 60;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+      padding: 16px;
+    }
+
+    .modal-backdrop.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-card {
+      background: linear-gradient(180deg, #2e1d16 0%, #1c100b 60%, #120906 100%);
+      border: 2px solid #633c27;
+      border-radius: 24px;
+      padding: 30px 24px;
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 215, 170, 0.2);
+      transform: translateY(25px) scale(0.92);
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .modal-backdrop.active .modal-card {
+      transform: translateY(0) scale(1);
+    }
+
+    .modal-header {
+      margin-bottom: 20px;
+    }
+
+    .modal-title-glory {
+      font-size: 34px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      text-transform: uppercase;
+      background: linear-gradient(180deg, #ffffff 15%, #ffd285 60%, #cf7b24 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 2px 10px rgba(0, 0, 0, 0.8));
+      line-height: 1.1;
+    }
+
+    .modal-title-glory.gameover {
+      background: linear-gradient(180deg, #ffffff 10%, #ff7373 55%, #c71b1b 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .modal-subtitle {
+      font-size: 13px;
+      font-weight: 700;
+      color: #cca483;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-top: 5px;
+    }
+
+    .stats-grid {
+      background: rgba(18, 10, 6, 0.7);
+      border: 1px solid rgba(120, 80, 50, 0.4);
+      border-radius: 16px;
+      padding: 16px 12px;
+      margin-bottom: 22px;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .stat-cell {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #a48168;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    .stat-number {
+      font-size: 28px;
+      font-weight: 900;
+      color: #ffffff;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .btn-cta {
+      background: linear-gradient(180deg, #ff9e2b 0%, #db5e00 100%);
+      border: none;
+      border-radius: 999px;
+      color: #ffffff;
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      padding: 15px 32px;
+      width: 100%;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(219, 94, 0, 0.5), inset 0 2px 0 rgba(255, 255, 255, 0.35);
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+      transition: transform 0.12s, box-shadow 0.12s, filter 0.15s;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-cta:hover {
+      filter: brightness(1.08);
+      box-shadow: 0 8px 25px rgba(219, 94, 0, 0.65);
+    }
+
+    .btn-cta:active {
+      transform: scale(0.96);
+    }
+
+    .btn-secondary {
+      background: rgba(55, 36, 26, 0.85);
+      border: 1px solid rgba(170, 115, 75, 0.45);
+      border-radius: 999px;
+      color: #ffdda8;
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      padding: 12px 24px;
+      width: 100%;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.12s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(75, 48, 35, 0.95);
+    }
+
+    .btn-secondary:active {
+      transform: scale(0.96);
+    }
+
+    .btn-revive {
+      background: linear-gradient(180deg, #22c55e 0%, #15803d 100%);
+      box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4), inset 0 2px 0 rgba(255, 255, 255, 0.35);
+    }
+
+    .btn-revive:hover {
+      box-shadow: 0 8px 25px rgba(34, 197, 94, 0.55);
+    }
+
+    .modal-hint {
+      margin-top: 14px;
+      font-size: 12px;
+      color: #9c7b64;
+      letter-spacing: 0.5px;
+    }
+
+    /* Knife Armory Shop Grid */
+    .armory-scroll {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      max-height: 280px;
+      overflow-y: auto;
+      padding: 6px 2px 14px 2px;
+      margin-bottom: 16px;
+    }
+
+    .armory-scroll::-webkit-scrollbar {
+      width: 6px;
+    }
+    .armory-scroll::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 4px;
+    }
+    .armory-scroll::-webkit-scrollbar-thumb {
+      background: rgba(180, 120, 70, 0.5);
+      border-radius: 4px;
+    }
+
+    .knife-card {
+      background: rgba(22, 13, 8, 0.8);
+      border: 2px solid #573420;
+      border-radius: 14px;
+      padding: 10px 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      position: relative;
+      transition: transform 0.15s, border-color 0.2s, background 0.2s;
+    }
+
+    .knife-card:hover {
+      background: rgba(38, 23, 15, 0.9);
+      border-color: #a86c3d;
+      transform: translateY(-2px);
+    }
+
+    .knife-card.equipped {
+      border-color: #fbbf24;
+      background: linear-gradient(180deg, rgba(251, 191, 36, 0.15) 0%, rgba(35, 20, 10, 0.8) 100%);
+      box-shadow: 0 0 14px rgba(251, 191, 36, 0.35);
+    }
+
+    .knife-card.locked {
+      opacity: 0.55;
+      filter: grayscale(0.6);
+    }
+
+    .knife-preview-box {
+      width: 44px;
+      height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 6px;
+    }
+
+    .knife-card-name {
+      font-size: 11px;
+      font-weight: 800;
+      color: #eeddcc;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+      text-align: center;
+    }
+
+    .knife-card-status {
+      font-size: 10px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .knife-card-status.equipped-badge {
+      color: #fbbf24;
+    }
+
+    .knife-card-status.cost-badge {
+      color: #ff6b6b;
+    }
+
+    /* Pause Menu List */
+    .pause-menu-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <div id="shake-wrapper">
+      <canvas id="game-canvas"></canvas>
+    </div>
+
+    <!-- Vignette & Ambience -->
+    <div class="vignette-overlay"></div>
+    <div class="ambient-glow-top"></div>
+
+    <!-- Minimal Arcade HUD -->
+    <div class="hud-layer">
+      <div class="hud-top-bar">
+        <!-- Stage info & Score -->
+        <div class="stage-cluster">
+          <div id="stage-badge" class="stage-pill">STAGE 1</div>
+          <div id="score-text" class="score-banner">0</div>
+        </div>
+
+        <!-- Right Controls: Apples, Armory, Pause, Audio -->
+        <div class="hud-controls-right">
+          <!-- Apple Currency Chip -->
+          <div id="apple-chip" class="apple-chip">
+            <svg class="apple-icon" viewBox="0 0 24 24" fill="none">
+              <!-- Leaf -->
+              <path d="M12 4C14 2 17 2 17 4C17 6 14 6 12 4Z" fill="#4ADE80" />
+              <!-- Stem -->
+              <path d="M12 4.5C11.5 2.8 12.2 1.8 13.2 1" stroke="#713F12" stroke-width="2" stroke-linecap="round" />
+              <!-- Apple Body -->
+              <path d="M12 6C9.2 3.8 3.8 5 3.8 11.5C3.8 17 8 21.5 12 21.5C16 21.5 20.2 17 20.2 11.5C20.2 5 14.8 3.8 12 6Z" fill="url(#appleGradHUD)" />
+              <!-- Specular Shine -->
+              <path d="M7 8.5C6.2 10.5 6.2 13 7.2 15" stroke="#FFA3A3" stroke-width="1.8" stroke-linecap="round" opacity="0.65" />
+              <defs>
+                <linearGradient id="appleGradHUD" x1="4" y1="5" x2="19" y2="21">
+                  <stop offset="0%" stop-color="#FF4D4D"/>
+                  <stop offset="60%" stop-color="#DC2626"/>
+                  <stop offset="100%" stop-color="#991B1B"/>
+                </linearGradient>
+              </defs>
+            </svg>
+            <span id="apple-count-text" class="apple-value">0</span>
+          </div>
+
+          <!-- Knife Armory Button -->
+          <button id="btn-open-armory" class="hud-round-btn" aria-label="Knife Armory" title="Knife Armory">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"></polygon>
+              <line x1="13" y1="19" x2="19" y2="13"></line>
+              <line x1="16" y1="16" x2="20" y2="20"></line>
+              <line x1="19" y1="21" x2="21" y2="19"></line>
+            </svg>
+          </button>
+
+          <!-- Audio Toggle Button -->
+          <button id="btn-toggle-audio" class="hud-round-btn" aria-label="Toggle Sound" title="Sound Mute/Unmute">
+            <svg id="audio-icon-on" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+              <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+            </svg>
+            <svg id="audio-icon-off" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+              <line x1="23" y1="9" x2="17" y2="15"></line>
+              <line x1="17" y1="9" x2="23" y2="15"></line>
+            </svg>
+          </button>
+
+          <!-- Pause Button -->
+          <button id="btn-pause-game" class="hud-round-btn" aria-label="Pause Game" title="Pause Game">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <rect x="6" y="5" width="4" height="14" rx="1.5"></rect>
+              <rect x="14" y="5" width="4" height="14" rx="1.5"></rect>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Left Ammo Stack (Vertical Remaining Knives) -->
+      <div id="knife-ammo-panel" class="hud-ammo-panel"></div>
+    </div>
+
+    <!-- Dynamic Combo Banner -->
+    <div id="combo-banner" class="combo-banner">x2 COMBO!</div>
+
+    <!-- Stage Victory Toast -->
+    <div id="victory-toast" class="victory-toast">STAGE CLEAR!</div>
+
+    <!-- 1. Title Screen Modal -->
+    <div id="title-modal" class="modal-backdrop active">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-glory">Knife Master</div>
+          <div class="modal-subtitle">3D Arcade Throw</div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-cell">
+            <span class="stat-label">Best Score</span>
+            <span id="title-best-score" class="stat-number">0</span>
+          </div>
+          <div class="stat-cell">
+            <span class="stat-label">Total Apples</span>
+            <span id="title-apple-tally" class="stat-number">0</span>
+          </div>
+        </div>
+
+        <button id="btn-start-play" class="btn-cta">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          PLAY GAME
+        </button>
+
+        <button id="btn-open-armory-title" class="btn-secondary">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"></polygon>
+            <line x1="13" y1="19" x2="19" y2="13"></line>
+            <line x1="16" y1="16" x2="20" y2="20"></line>
+            <line x1="19" y1="21" x2="21" y2="19"></line>
+          </svg>
+          KNIFE ARMORY
+        </button>
+
+        <div class="modal-hint">Tap Screen or Press Spacebar to Throw</div>
+      </div>
+    </div>
+
+    <!-- 2. Game Over Modal -->
+    <div id="gameover-modal" class="modal-backdrop">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-glory gameover">Game Over</div>
+          <div class="modal-subtitle">Blades Collided!</div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-cell">
+            <span class="stat-label">Stage Reached</span>
+            <span id="gameover-stage" class="stat-number">1</span>
+          </div>
+          <div class="stat-cell">
+            <span class="stat-label">Score</span>
+            <span id="gameover-score" class="stat-number">0</span>
+          </div>
+        </div>
+
+        <!-- Revive Button (shown if user has >= 10 apples) -->
+        <button id="btn-revive" class="btn-cta btn-revive" style="display: none;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+          </svg>
+          CONTINUE (10 🍏)
+        </button>
+
+        <button id="btn-restart" class="btn-cta">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+            <path d="M3 3v5h5"/>
+          </svg>
+          PLAY AGAIN
+        </button>
+
+        <button id="btn-open-armory-gameover" class="btn-secondary">
+          KNIFE ARMORY
+        </button>
+      </div>
+    </div>
+
+    <!-- 3. Pause Modal -->
+    <div id="pause-modal" class="modal-backdrop">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-glory">Paused</div>
+          <div class="modal-subtitle">Take a Breath</div>
+        </div>
+
+        <div class="pause-menu-list">
+          <button id="btn-resume-game" class="btn-cta">
+            RESUME
+          </button>
+          <button id="btn-restart-from-pause" class="btn-secondary">
+            RESTART GAME
+          </button>
+          <button id="btn-armory-from-pause" class="btn-secondary">
+            KNIFE ARMORY
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Knife Armory (Skins / Shop) Modal -->
+    <div id="armory-modal" class="modal-backdrop">
+      <div class="modal-card" style="max-width: 440px;">
+        <div class="modal-header" style="margin-bottom: 12px;">
+          <div class="modal-title-glory">Knife Armory</div>
+          <div class="modal-subtitle">Select or Unlock Blades</div>
+        </div>
+
+        <div id="armory-grid" class="armory-scroll">
+          <!-- Dynamically populated knife cards -->
+        </div>
+
+        <button id="btn-close-armory" class="btn-cta">
+          DONE
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ==========================================================================
+       KNIFE MASTER 3D STYLE — PRODUCTION ENGINE
+       Trigonometry physics, Procedural Web Audio Synth, Knife Customizer
+       ========================================================================== */
+
+    (function() {
+      'use strict';
+
+      // --- KNIFE SKINS DATABASE ---
+      const KNIFE_SKINS = [
+        {
+          id: 'classic',
+          name: 'Steel Dagger',
+          cost: 0,
+          bladeColors: ['#a6b4c2', '#ffffff', '#7c8d9f'],
+          guardColor: '#cca055',
+          handleColor: '#3a2012',
+          glowColor: 'rgba(255, 200, 100, 0.4)',
+          description: 'Standard surgical stainless steel blade.'
+        },
+        {
+          id: 'golden',
+          name: 'Gold Falcon',
+          cost: 15,
+          bladeColors: ['#f59e0b', '#fef08a', '#b45309'],
+          guardColor: '#fbbf24',
+          handleColor: '#451a03',
+          glowColor: 'rgba(251, 191, 36, 0.7)',
+          description: 'Gilded blade with regal royal balance.'
+        },
+        {
+          id: 'crimson',
+          name: 'Blood Dagger',
+          cost: 30,
+          bladeColors: ['#ef4444', '#fecaca', '#991b1b'],
+          guardColor: '#7f1d1d',
+          handleColor: '#1c1917',
+          glowColor: 'rgba(239, 68, 68, 0.8)',
+          description: 'Forged from dark volcanic obsidian and ruby.'
+        },
+        {
+          id: 'cyber',
+          name: 'Cyber Kunai',
+          cost: 60,
+          bladeColors: ['#06b6d4', '#cffafe', '#0e7490'],
+          guardColor: '#0891b2',
+          handleColor: '#0f172a',
+          glowColor: 'rgba(6, 182, 212, 0.85)',
+          description: 'High-frequency energized plasma edge.'
+        },
+        {
+          id: 'toxic',
+          name: 'Venom Fang',
+          cost: 100,
+          bladeColors: ['#10b981', '#d1fae5', '#047857'],
+          guardColor: '#059669',
+          handleColor: '#064e3b',
+          glowColor: 'rgba(16, 185, 129, 0.85)',
+          description: 'Coated in deadly viper essence.'
+        },
+        {
+          id: 'dragon',
+          name: 'Dragon Slayer',
+          cost: 150,
+          bladeColors: ['#f97316', '#fff7ed', '#c2410c'],
+          guardColor: '#ea580c',
+          handleColor: '#431407',
+          glowColor: 'rgba(249, 115, 22, 0.9)',
+          description: 'Imbued with the eternal flame of wyverns.'
+        }
+      ];
+
+      // --- PROCEDURAL WEB AUDIO CONTROLLER ---
+      class AudioSynth {
+        constructor() {
+          this.ctx = null;
+          this.muted = localStorage.getItem('km_muted') === 'true';
+        }
+
+        init() {
+          if (!this.ctx) {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (AudioCtx) this.ctx = new AudioCtx();
+          }
+          if (this.ctx && this.ctx.state === 'suspended') {
+            this.ctx.resume();
+          }
+        }
+
+        toggleMute() {
+          this.muted = !this.muted;
+          localStorage.setItem('km_muted', this.muted ? 'true' : 'false');
+          return this.muted;
+        }
+
+        // Throw Whoosh
+        playThrow() {
+          if (this.muted) return;
+          this.init();
+          if (!this.ctx) return;
+
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          const filter = this.ctx.createBiquadFilter();
+
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(480, now);
+          osc.frequency.exponentialRampToValueAtTime(140, now + 0.11);
+
+          filter.type = 'lowpass';
+          filter.frequency.setValueAtTime(1400, now);
+          filter.frequency.exponentialRampToValueAtTime(250, now + 0.11);
+
+          gain.gain.setValueAtTime(0.01, now);
+          gain.gain.linearRampToValueAtTime(0.28, now + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.11);
+
+          osc.connect(filter);
+          filter.connect(gain);
+          gain.connect(this.ctx.destination);
+
+          osc.start(now);
+          osc.stop(now + 0.12);
+        }
+
+        // Solid Wood Hit Thud
+        playWoodHit(combo = 1) {
+          if (this.muted) return;
+          this.init();
+          if (!this.ctx) return;
+
+          const now = this.ctx.currentTime;
+          const pitchBonus = Math.min((combo - 1) * 15, 80);
+
+          // Deep body resonance
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(140 + pitchBonus, now);
+          osc.frequency.exponentialRampToValueAtTime(45, now + 0.09);
+
+          gain.gain.setValueAtTime(0.7, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.13);
+
+          // Wood crack transient
+          const bufferSize = this.ctx.sampleRate * 0.04;
+          const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+          const data = noiseBuffer.getChannelData(0);
+          for (let i = 0; i < bufferSize; i++) {
+            data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.25));
+          }
+
+          const noise = this.ctx.createBufferSource();
+          noise.buffer = noiseBuffer;
+          const filter = this.ctx.createBiquadFilter();
+          filter.type = 'bandpass';
+          filter.frequency.setValueAtTime(2000, now);
+          filter.Q.setValueAtTime(3, now);
+
+          const noiseGain = this.ctx.createGain();
+          noiseGain.gain.setValueAtTime(0.45, now);
+          noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+
+          noise.connect(filter);
+          filter.connect(noiseGain);
+          noiseGain.connect(this.ctx.destination);
+          noise.start(now);
+        }
+
+        // Juicy Apple Slice
+        playAppleSlice() {
+          if (this.muted) return;
+          this.init();
+          if (!this.ctx) return;
+
+          const now = this.ctx.currentTime;
+
+          // Crisp slicing high sweep
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(1400, now);
+          osc.frequency.exponentialRampToValueAtTime(320, now + 0.13);
+
+          gain.gain.setValueAtTime(0.4, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.15);
+
+          // Sparkling chime
+          const chime = this.ctx.createOscillator();
+          const chimeGain = this.ctx.createGain();
+          chime.type = 'sine';
+          chime.frequency.setValueAtTime(1046, now + 0.03); // C6
+          chime.frequency.exponentialRampToValueAtTime(2093, now + 0.12); // C7
+
+          chimeGain.gain.setValueAtTime(0.25, now + 0.03);
+          chimeGain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+
+          chime.connect(chimeGain);
+          chimeGain.connect(this.ctx.destination);
+          chime.start(now + 0.03);
+          chime.stop(now + 0.26);
+        }
+
+        // Metallic Clang Collision & Deflect
+        playCollision() {
+          if (this.muted) return;
+          this.init();
+          if (!this.ctx) return;
+
+          const now = this.ctx.currentTime;
+          const harmonics = [1350, 2100, 3150, 4400];
+          harmonics.forEach((freq, idx) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = idx % 2 === 0 ? 'sine' : 'square';
+            osc.frequency.setValueAtTime(freq, now);
+
+            gain.gain.setValueAtTime(0.32 / (idx + 1), now);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.45);
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.48);
+          });
+
+          // Sub drop
+          const sub = this.ctx.createOscillator();
+          const subGain = this.ctx.createGain();
+          sub.type = 'sine';
+          sub.frequency.setValueAtTime(115, now);
+          sub.frequency.exponentialRampToValueAtTime(32, now + 0.32);
+
+          subGain.gain.setValueAtTime(0.65, now);
+          subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+
+          sub.connect(subGain);
+          subGain.connect(this.ctx.destination);
+          sub.start(now);
+          sub.stop(now + 0.36);
+        }
+
+        // Stage Victory Arpeggio
+        playVictory() {
+          if (this.muted) return;
+          this.init();
+          if (!this.ctx) return;
+
+          const now = this.ctx.currentTime;
+          const notes = [523.25, 659.25, 783.99, 1046.5, 1318.5]; // C5, E5, G5, C6, E6
+          notes.forEach((freq, i) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            const t = now + i * 0.08;
+
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, t);
+
+            gain.gain.setValueAtTime(0, t);
+            gain.gain.linearRampToValueAtTime(0.28, t + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(t);
+            osc.stop(t + 0.52);
+          });
+        }
+      }
+
+      // --- ENGINE CONSTANTS ---
+      const CANVAS_WIDTH = 480;
+      const CANVAS_HEIGHT = 800;
+      const TARGET_RADIUS = 84;
+      const TARGET_CENTER_X = CANVAS_WIDTH / 2;
+      const TARGET_CENTER_Y = 245;
+
+      // KNIFE GEOMETRY CONSTANTS
+      // Tip is at (0, 0). Length is ~82px.
+      // Pos Y is downwards. So Tip (0,0) is at top, Handle (0, 82) is at bottom.
+      const KNIFE_TOTAL_LENGTH = 82;
+      const KNIFE_EMBED_DEPTH = 18; // Embedded into log radius
+      const KNIFE_READY_Y = CANVAS_HEIGHT - 130;
+      const KNIFE_SPEED = 3000; // px/sec
+
+      // Angular Collision Threshold (~14 degrees)
+      const KNIFE_COLLISION_ARC = 0.25; 
+      const APPLE_COLLISION_ARC = 0.32;
+
+      // Audio & Haptics
+      const audio = new AudioSynth();
+      function triggerHaptic(pattern) {
+        if ('vibrate' in navigator) {
+          try { navigator.vibrate(pattern); } catch (e) {}
+        }
+      }
+
+      // --- PERSISTENCE & DATA ---
+      let highScore = parseInt(localStorage.getItem('km_highscore') || '0', 10);
+      let totalApples = parseInt(localStorage.getItem('km_apples') || '0', 10);
+      let unlockedSkins = JSON.parse(localStorage.getItem('km_unlocked_skins') || '["classic"]');
+      let equippedSkinId = localStorage.getItem('km_equipped_skin') || 'classic';
+
+      // --- GAME STATE ---
+      let gameState = 'title'; // 'title' | 'playing' | 'paused' | 'gameover' | 'victory_pause'
+      let stageNumber = 1;
+      let currentScore = 0;
+      let targetAngle = 0;
+      let targetRotationSpeed = 1.8; // rad/s
+      let stageTime = 0;
+
+      // Rotation dynamics
+      let rotationPattern = 'constant';
+      let patternParams = {};
+
+      // Stage Target items
+      let totalKnivesToThrow = 7;
+      let remainingKnives = 7;
+      let stuckKnives = []; // Array of { offsetAngle, type: 'initial'|'wood' }
+      let apples = [];      // Array of { offsetAngle, sliced: boolean }
+
+      // Active player knife
+      let activeKnife = {
+        active: false,
+        y: KNIFE_READY_Y,
+        vy: 0,
+        trail: [] // Array of { y, alpha }
+      };
+
+      // Combo Tracking
+      let comboCount = 0;
+      let lastHitTimestamp = 0;
+
+      // Particles & Physics Objects
+      let particles = [];
+      let flyingHalves = [];
+      let bouncingKnives = [];
+      let confettiList = [];
+      let floatingTexts = [];
+
+      // Screen Juice
+      let shakeIntensity = 0;
+      let hitstopTimer = 0;
+      let targetRecoilY = 0;
+
+      // DOM Elements
+      let canvas, ctx, shakeWrapper;
+      const stageBadgeEl = document.getElementById('stage-badge');
+      const scoreTextEl = document.getElementById('score-text');
+      const appleChipEl = document.getElementById('apple-chip');
+      const appleCountTextEl = document.getElementById('apple-count-text');
+      const knifeAmmoPanelEl = document.getElementById('knife-ammo-panel');
+      const comboBannerEl = document.getElementById('combo-banner');
+      const victoryToastEl = document.getElementById('victory-toast');
+
+      // Modals
+      const titleModalEl = document.getElementById('title-modal');
+      const gameoverModalEl = document.getElementById('gameover-modal');
+      const pauseModalEl = document.getElementById('pause-modal');
+      const armoryModalEl = document.getElementById('armory-modal');
+
+      // Stats Elements
+      const titleBestScoreEl = document.getElementById('title-best-score');
+      const titleAppleTallyEl = document.getElementById('title-apple-tally');
+      const gameoverStageEl = document.getElementById('gameover-stage');
+      const gameoverScoreEl = document.getElementById('gameover-score');
+      const armoryGridEl = document.getElementById('armory-grid');
+
+      // Buttons
+      const btnStartPlay = document.getElementById('btn-start-play');
+      const btnRestart = document.getElementById('btn-restart');
+      const btnRevive = document.getElementById('btn-revive');
+      const btnResumeGame = document.getElementById('btn-resume-game');
+      const btnRestartFromPause = document.getElementById('btn-restart-from-pause');
+      const btnToggleAudio = document.getElementById('btn-toggle-audio');
+      const audioIconOn = document.getElementById('audio-icon-on');
+      const audioIconOff = document.getElementById('audio-icon-off');
+      const btnPauseGame = document.getElementById('btn-pause-game');
+      const btnOpenArmory = document.getElementById('btn-open-armory');
+      const btnOpenArmoryTitle = document.getElementById('btn-open-armory-title');
+      const btnOpenArmoryGameover = document.getElementById('btn-open-armory-gameover');
+      const btnArmoryFromPause = document.getElementById('btn-armory-from-pause');
+      const btnCloseArmory = document.getElementById('btn-close-armory');
+
+      // Rendering scaling
+      let dpr = 1;
+      let scale = 1;
+      let offsetX = 0;
+      let offsetY = 0;
+
+      // --- INITIALIZATION ---
+      function init() {
+        canvas = document.getElementById('game-canvas');
+        ctx = canvas.getContext('2d');
+        shakeWrapper = document.getElementById('shake-wrapper');
+
+        window.addEventListener('resize', handleResize);
+        handleResize();
+
+        // Audio initial UI state
+        if (audio.muted) {
+          audioIconOn.style.display = 'none';
+          audioIconOff.style.display = 'block';
+        }
+
+        // Primary Action (Throw knife or dismiss modals)
+        const handlePlayerAction = (e) => {
+          if (e && e.cancelable) e.preventDefault();
+          audio.init();
+
+          if (gameState === 'title') {
+            startGame();
+          } else if (gameState === 'gameover') {
+            restartGame();
+          } else if (gameState === 'playing') {
+            throwKnife();
+          }
+        };
+
+        // Pointer/touch listener on canvas
+        canvas.addEventListener('pointerdown', handlePlayerAction);
+
+        // Keyboard navigation
+        window.addEventListener('keydown', (e) => {
+          if (e.code === 'Space' || e.code === 'Enter' || e.code === 'ArrowUp' || e.code === 'KeyW') {
+            e.preventDefault();
+            handlePlayerAction();
+          } else if (e.code === 'Escape' || e.code === 'KeyP') {
+            e.preventDefault();
+            if (gameState === 'playing') {
+              pauseGame();
+            } else if (gameState === 'paused') {
+              resumeGame();
+            }
+          }
+        });
+
+        // UI Button Listeners
+        btnStartPlay.addEventListener('click', (e) => {
+          e.stopPropagation();
+          audio.init();
+          startGame();
+        });
+
+        btnRestart.addEventListener('click', (e) => {
+          e.stopPropagation();
+          audio.init();
+          restartGame();
+        });
+
+        btnRevive.addEventListener('click', (e) => {
+          e.stopPropagation();
+          reviveGame();
+        });
+
+        btnToggleAudio.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const isMuted = audio.toggleMute();
+          audioIconOn.style.display = isMuted ? 'none' : 'block';
+          audioIconOff.style.display = isMuted ? 'block' : 'none';
+        });
+
+        btnPauseGame.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (gameState === 'playing') pauseGame();
+        });
+
+        btnResumeGame.addEventListener('click', (e) => {
+          e.stopPropagation();
+          resumeGame();
+        });
+
+        btnRestartFromPause.addEventListener('click', (e) => {
+          e.stopPropagation();
+          pauseModalEl.classList.remove('active');
+          startGame();
+        });
+
+        // Armory button bindings
+        [btnOpenArmory, btnOpenArmoryTitle, btnOpenArmoryGameover, btnArmoryFromPause].forEach(btn => {
+          if (btn) {
+            btn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              openArmory();
+            });
+          }
+        });
+
+        btnCloseArmory.addEventListener('click', (e) => {
+          e.stopPropagation();
+          closeArmory();
+        });
+
+        // Sync initial storage UI
+        titleBestScoreEl.textContent = highScore;
+        titleAppleTallyEl.textContent = totalApples;
+        appleCountTextEl.textContent = totalApples;
+
+        // Start 60fps Game Loop
+        let lastTime = performance.now();
+        function loop(now) {
+          const dt = Math.min((now - lastTime) / 1000, 0.05);
+          lastTime = now;
+
+          update(dt);
+          render();
+
+          requestAnimationFrame(loop);
+        }
+        requestAnimationFrame(loop);
+      }
+
+      // --- RESIZE & SCALING ---
+      function handleResize() {
+        dpr = window.devicePixelRatio || 1;
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+
+        canvas.width = w * dpr;
+        canvas.height = h * dpr;
+
+        const scaleX = w / CANVAS_WIDTH;
+        const scaleY = h / CANVAS_HEIGHT;
+        scale = Math.min(scaleX, scaleY);
+
+        offsetX = (w - CANVAS_WIDTH * scale) / 2;
+        offsetY = (h - CANVAS_HEIGHT * scale) / 2;
+      }
+
+      // --- STAGE SETUP & BOSS VARIETY ---
+      function setupStage(stageNum) {
+        stageNumber = stageNum;
+        stageTime = 0;
+        targetAngle = 0;
+        comboCount = 0;
+
+        const isBoss = (stageNumber % 5 === 0);
+
+        if (isBoss) {
+          const bossIdx = stageNumber / 5;
+          const bossNames = ['IRON OAK', 'MOLTEN CORE', 'FROZEN RELIC', 'CYBER MATRIX', 'ROYAL VAULT'];
+          const bossTitle = bossNames[(bossIdx - 1) % bossNames.length];
+          stageBadgeEl.textContent = `BOSS: ${bossTitle}`;
+          stageBadgeEl.classList.add('boss');
+          totalKnivesToThrow = 9 + Math.min(Math.floor(stageNumber / 5), 4);
+        } else {
+          stageBadgeEl.textContent = `STAGE ${stageNumber}`;
+          stageBadgeEl.classList.remove('boss');
+          totalKnivesToThrow = 6 + (stageNumber % 4);
+        }
+
+        remainingKnives = totalKnivesToThrow;
+        updateAmmoHUD();
+
+        // Generate pre-existing stuck knives for challenge
+        stuckKnives = [];
+        const initialCount = isBoss ? 2 + Math.floor(Math.random() * 2) : (stageNumber > 1 ? Math.min(Math.floor((stageNumber - 1) / 2), 3) : 0);
+
+        const usedAngles = [];
+        for (let i = 0; i < initialCount; i++) {
+          let candidateAngle;
+          let safe = false;
+          let attempts = 0;
+          while (!safe && attempts < 50) {
+            attempts++;
+            candidateAngle = Math.random() * Math.PI * 2;
+            // Throw point is at angle PI/2 (straight bottom)
+            safe = Math.abs(normalizeAngle(candidateAngle - Math.PI / 2)) > 0.45 &&
+                   usedAngles.every(a => Math.abs(normalizeAngle(candidateAngle - a)) > 0.45);
+          }
+          if (safe) {
+            usedAngles.push(candidateAngle);
+            stuckKnives.push({ offsetAngle: candidateAngle, type: 'initial', skinId: 'classic' });
+          }
+        }
+
+        // Generate occasional apples
+        apples = [];
+        const spawnApple = isBoss || Math.random() < 0.7;
+        if (spawnApple) {
+          const appleCount = isBoss ? 2 : (Math.random() < 0.3 ? 2 : 1);
+          for (let i = 0; i < appleCount; i++) {
+            let appleAngle;
+            let safe = false;
+            let attempts = 0;
+            while (!safe && attempts < 50) {
+              attempts++;
+              appleAngle = Math.random() * Math.PI * 2;
+              safe = usedAngles.every(a => Math.abs(normalizeAngle(appleAngle - a)) > 0.45) &&
+                     apples.every(app => Math.abs(normalizeAngle(appleAngle - app.offsetAngle)) > 0.45);
+            }
+            if (safe) {
+              apples.push({ offsetAngle: appleAngle, sliced: false });
+            }
+          }
+        }
+
+        // Rotation pattern dynamics
+        const patterns = ['constant', 'sine_wave', 'pause_and_rush', 'reverse_surge'];
+        if (stageNumber === 1) {
+          rotationPattern = 'constant';
+          targetRotationSpeed = 1.75;
+        } else if (isBoss) {
+          rotationPattern = 'pause_and_rush';
+          patternParams = {
+            baseSpeed: 3.4,
+            pauseInterval: 1.3,
+            isPaused: false,
+            timer: 0,
+            dir: 1
+          };
+        } else {
+          rotationPattern = patterns[stageNumber % patterns.length];
+          const dir = Math.random() < 0.5 ? 1 : -1;
+          targetRotationSpeed = dir * (1.8 + Math.min(stageNumber * 0.15, 2.0));
+          patternParams = {
+            freq: 1.2 + Math.random() * 0.8,
+            baseSpeed: Math.abs(targetRotationSpeed),
+            dir: dir,
+            timer: 0
+          };
+        }
+
+        activeKnife.active = false;
+        activeKnife.y = KNIFE_READY_Y;
+        activeKnife.trail = [];
+      }
+
+      // --- AMMO HUD INVENTORY ---
+      function updateAmmoHUD() {
+        knifeAmmoPanelEl.innerHTML = '';
+        const skin = getEquippedSkin();
+
+        for (let i = 0; i < totalKnivesToThrow; i++) {
+          const slot = document.createElement('div');
+          slot.className = 'knife-ammo-slot' + (i >= remainingKnives ? ' spent' : '');
+          slot.innerHTML = `
+            <svg viewBox="0 0 16 36" width="100%" height="100%">
+              <!-- Blade with equipped skin gradient -->
+              <path d="M8 0 L11 12 L10 24 L6 24 L5 12 Z" fill="${skin.bladeColors[1]}" />
+              <!-- Crossguard -->
+              <rect x="3" y="24" width="10" height="2.5" rx="1" fill="${skin.guardColor}" />
+              <!-- Handle -->
+              <rect x="6.5" y="26.5" width="3" height="7" rx="0.8" fill="${skin.handleColor}" />
+              <!-- Pommel -->
+              <ellipse cx="8" cy="34" rx="2" ry="1.2" fill="${skin.guardColor}" />
+            </svg>
+          `;
+          knifeAmmoPanelEl.appendChild(slot);
+        }
+      }
+
+      // --- GAME FLOW ---
+      function startGame() {
+        gameState = 'playing';
+        stageNumber = 1;
+        currentScore = 0;
+        scoreTextEl.textContent = '0';
+        titleModalEl.classList.remove('active');
+        gameoverModalEl.classList.remove('active');
+        pauseModalEl.classList.remove('active');
+        armoryModalEl.classList.remove('active');
+        setupStage(1);
+      }
+
+      function restartGame() {
+        gameoverModalEl.classList.remove('active');
+        startGame();
+      }
+
+      function pauseGame() {
+        if (gameState !== 'playing') return;
+        gameState = 'paused';
+        pauseModalEl.classList.add('active');
+      }
+
+      function resumeGame() {
+        if (gameState !== 'paused') return;
+        pauseModalEl.classList.remove('active');
+        gameState = 'playing';
+      }
+
+      function triggerGameOver() {
+        gameState = 'gameover';
+        audio.playCollision();
+        triggerHaptic([60, 40, 80]);
+        addScreenShake(20);
+
+        if (currentScore > highScore) {
+          highScore = currentScore;
+          localStorage.setItem('km_highscore', highScore.toString());
+          titleBestScoreEl.textContent = highScore;
+        }
+
+        gameoverStageEl.textContent = stageNumber;
+        gameoverScoreEl.textContent = currentScore;
+
+        // Revive button availability check (10 apples)
+        if (totalApples >= 10) {
+          btnRevive.style.display = 'flex';
+        } else {
+          btnRevive.style.display = 'none';
+        }
+
+        setTimeout(() => {
+          gameoverModalEl.classList.add('active');
+        }, 550);
+      }
+
+      function reviveGame() {
+        if (totalApples < 10) return;
+        totalApples -= 10;
+        localStorage.setItem('km_apples', totalApples.toString());
+        appleCountTextEl.textContent = totalApples;
+        titleAppleTallyEl.textContent = totalApples;
+
+        gameoverModalEl.classList.remove('active');
+        activeKnife.active = false;
+        activeKnife.y = KNIFE_READY_Y;
+        gameState = 'playing';
+      }
+
+      function triggerStageVictory() {
+        gameState = 'victory_pause';
+        audio.playVictory();
+        triggerHaptic([40, 40, 60]);
+
+        spawnStageVictoryConfetti();
+        victoryToastEl.classList.add('show');
+
+        setTimeout(() => {
+          victoryToastEl.classList.remove('show');
+          setupStage(stageNumber + 1);
+          gameState = 'playing';
+        }, 1300);
+      }
+
+      // --- THROWING LOGIC ---
+      function throwKnife() {
+        if (activeKnife.active || remainingKnives <= 0 || gameState !== 'playing') {
+          return;
+        }
+
+        activeKnife.active = true;
+        activeKnife.y = KNIFE_READY_Y;
+        activeKnife.vy = -KNIFE_SPEED;
+        activeKnife.trail = [];
+        audio.playThrow();
+        triggerHaptic(20);
+      }
+
+      function normalizeAngle(a) {
+        while (a > Math.PI) a -= Math.PI * 2;
+        while (a < -Math.PI) a += Math.PI * 2;
+        return a;
+      }
+
+      function addScreenShake(amount) {
+        shakeIntensity = Math.min(shakeIntensity + amount, 28);
+      }
+
+      function triggerComboStreak() {
+        const now = performance.now();
+        if (now - lastHitTimestamp < 900) {
+          comboCount++;
+          if (comboCount >= 2) {
+            const labels = ['x2 QUICK!', 'x3 SHARP!', 'x4 DEADLY!', 'x5 KNIFE MASTER!'];
+            const label = labels[Math.min(comboCount - 2, labels.length - 1)];
+            comboBannerEl.textContent = label;
+            comboBannerEl.classList.add('active');
+
+            setTimeout(() => {
+              comboBannerEl.classList.remove('active');
+            }, 600);
+
+            // Combo bonus score
+            currentScore += (comboCount - 1);
+            scoreTextEl.textContent = currentScore;
+          }
+        } else {
+          comboCount = 1;
+        }
+        lastHitTimestamp = now;
+      }
+
+      // --- PARTICLE EMITTERS ---
+      function spawnWoodSplinters(x, y) {
+        // Tactile Impact Shockwave
+        particles.push({
+          x: x,
+          y: y,
+          vx: 0,
+          vy: 0,
+          radius: 5,
+          growth: 180,
+          lineWidth: 2.6,
+          color: '#ffe082',
+          alpha: 1,
+          decay: 4.2,
+          type: 'shockwave'
+        });
+
+        const count = 22;
+        for (let i = 0; i < count; i++) {
+          const angle = Math.PI / 2 + (Math.random() - 0.5) * 1.8;
+          const speed = 150 + Math.random() * 280;
+          particles.push({
+            x: x,
+            y: y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            rot: Math.random() * Math.PI * 2,
+            vRot: (Math.random() - 0.5) * 16,
+            width: 4 + Math.random() * 5,
+            height: 2 + Math.random() * 3,
+            color: Math.random() > 0.5 ? '#d9904e' : '#8f4f22',
+            alpha: 1,
+            decay: 2.2 + Math.random() * 1.5,
+            type: 'splinter'
+          });
+        }
+      }
+
+      function spawnSparks(x, y, isDeflection = false) {
+        const count = isDeflection ? 36 : 16;
+        for (let i = 0; i < count; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const speed = (isDeflection ? 240 : 130) + Math.random() * (isDeflection ? 400 : 190);
+          particles.push({
+            x: x,
+            y: y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            len: 5 + Math.random() * (isDeflection ? 16 : 8),
+            color: Math.random() > 0.3 ? '#ffea78' : '#ffa022',
+            alpha: 1,
+            decay: isDeflection ? 2.6 : 3.8,
+            type: 'spark'
+          });
+        }
+      }
+
+      function spawnAppleSlices(x, y) {
+        audio.playAppleSlice();
+        triggerHaptic([25, 20, 35]);
+
+        // Apple bouncy animation on HUD
+        appleChipEl.classList.add('bounce');
+        setTimeout(() => appleChipEl.classList.remove('bounce'), 300);
+
+        flyingHalves.push({
+          x: x,
+          y: y,
+          vx: -140 - Math.random() * 90,
+          vy: -90 - Math.random() * 90,
+          rot: 0,
+          vRot: -6 - Math.random() * 5,
+          alpha: 1
+        });
+        flyingHalves.push({
+          x: x,
+          y: y,
+          vx: 140 + Math.random() * 90,
+          vy: -90 - Math.random() * 90,
+          rot: 0,
+          vRot: 6 + Math.random() * 5,
+          alpha: 1
+        });
+
+        for (let i = 0; i < 26; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const speed = 90 + Math.random() * 240;
+          particles.push({
+            x: x,
+            y: y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            radius: 2 + Math.random() * 4.5,
+            color: Math.random() > 0.4 ? '#e61d1d' : '#ff4444',
+            alpha: 1,
+            decay: 1.8 + Math.random() * 1.5,
+            type: 'juice'
+          });
+        }
+
+        floatingTexts.push({
+          x: x,
+          y: y - 10,
+          text: '+2 🍏',
+          color: '#ff4d4d',
+          alpha: 1,
+          scale: 1.1
+        });
+      }
+
+      function spawnStageVictoryConfetti() {
+        const colors = ['#f59e0b', '#ef4444', '#10b981', '#3b82f6', '#ec4899', '#fbbf24', '#ffffff'];
+        for (let i = 0; i < 75; i++) {
+          confettiList.push({
+            x: CANVAS_WIDTH / 2 + (Math.random() - 0.5) * 80,
+            y: TARGET_CENTER_Y,
+            vx: (Math.random() - 0.5) * 600,
+            vy: -320 - Math.random() * 480,
+            width: 8 + Math.random() * 8,
+            height: 5 + Math.random() * 7,
+            rot: Math.random() * Math.PI * 2,
+            vRot: (Math.random() - 0.5) * 16,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            alpha: 1,
+            decay: 0.6 + Math.random() * 0.5
+          });
+        }
+      }
+
+      // --- MAIN UPDATE LOOP ---
+      function update(dt) {
+        if (gameState === 'paused') return;
+
+        // Hitstop micro-pause for tactile impact feel
+        if (hitstopTimer > 0) {
+          hitstopTimer -= dt;
+          return;
+        }
+
+        stageTime += dt;
+
+        // Screen shake decay
+        if (shakeIntensity > 0) {
+          shakeIntensity = Math.max(0, shakeIntensity - dt * 45);
+          const sx = (Math.random() * 2 - 1) * shakeIntensity;
+          const sy = (Math.random() * 2 - 1) * shakeIntensity;
+          shakeWrapper.style.transform = `translate(${sx}px, ${sy}px)`;
+        } else {
+          shakeWrapper.style.transform = 'none';
+        }
+
+        // Target recoil spring return
+        if (targetRecoilY < 0) {
+          targetRecoilY = Math.min(0, targetRecoilY + dt * 48);
+        }
+
+        // Target rotation dynamics
+        let currentSpeed = targetRotationSpeed;
+        if (rotationPattern === 'sine_wave') {
+          currentSpeed = patternParams.dir * (patternParams.baseSpeed * (0.4 + 0.8 * Math.sin(stageTime * patternParams.freq)));
+        } else if (rotationPattern === 'pause_and_rush') {
+          patternParams.timer += dt;
+          if (patternParams.timer > patternParams.pauseInterval) {
+            patternParams.timer = 0;
+            patternParams.isPaused = !patternParams.isPaused;
+            if (!patternParams.isPaused) {
+              patternParams.dir = Math.random() < 0.4 ? -patternParams.dir : patternParams.dir;
+            }
+          }
+          currentSpeed = patternParams.isPaused ? 0.3 * patternParams.dir : patternParams.baseSpeed * patternParams.dir;
+        } else if (rotationPattern === 'reverse_surge') {
+          const cycle = Math.sin(stageTime * 1.15);
+          currentSpeed = cycle * 3.5;
+        }
+
+        targetAngle += currentSpeed * dt;
+
+        // Thrown knife physics
+        if (activeKnife.active) {
+          activeKnife.y += activeKnife.vy * dt;
+
+          // Record motion trail
+          activeKnife.trail.push({ y: activeKnife.y, alpha: 0.8 });
+          if (activeKnife.trail.length > 6) activeKnife.trail.shift();
+
+          // Target impact threshold: when the knife TIP reaches the log bottom edge
+          // Target bottom edge in world space is (TARGET_CENTER_X, TARGET_CENTER_Y + TARGET_RADIUS)
+          const impactY = TARGET_CENTER_Y + TARGET_RADIUS;
+          if (activeKnife.y <= impactY) {
+            activeKnife.y = impactY;
+            activeKnife.active = false;
+            activeKnife.trail = [];
+
+            // Relative offset angle on the rotating log:
+            // Since bottom of log is at world angle PI/2 (90 degrees downward):
+            const impactOffset = normalizeAngle(Math.PI / 2 - targetAngle);
+
+            // Collision check against already stuck knives
+            let collidedKnife = null;
+            for (let i = 0; i < stuckKnives.length; i++) {
+              const diff = Math.abs(normalizeAngle(impactOffset - stuckKnives[i].offsetAngle));
+              if (diff < KNIFE_COLLISION_ARC) {
+                collidedKnife = stuckKnives[i];
+                break;
+              }
+            }
+
+            if (collidedKnife) {
+              // --- COLLISION FAIL ---
+              spawnSparks(TARGET_CENTER_X, impactY, true);
+
+              bouncingKnives.push({
+                x: TARGET_CENTER_X,
+                y: impactY,
+                vx: (Math.random() - 0.5) * 350 + (impactOffset > collidedKnife.offsetAngle ? 140 : -140),
+                vy: 280 + Math.random() * 200,
+                rot: 0,
+                vRot: (Math.random() - 0.5) * 25,
+                skinId: equippedSkinId
+              });
+
+              triggerGameOver();
+            } else {
+              // --- SUCCESSFUL WOOD HIT ---
+              triggerComboStreak();
+              audio.playWoodHit(comboCount);
+              triggerHaptic(28);
+              addScreenShake(6);
+              hitstopTimer = 0.04;
+              targetRecoilY = -5;
+
+              spawnWoodSplinters(TARGET_CENTER_X, impactY);
+              spawnSparks(TARGET_CENTER_X, impactY, false);
+
+              stuckKnives.push({
+                offsetAngle: impactOffset,
+                type: 'wood',
+                skinId: equippedSkinId
+              });
+
+              remainingKnives--;
+              currentScore++;
+              scoreTextEl.textContent = currentScore;
+              updateAmmoHUD();
+
+              // Check apple slice
+              for (let i = apples.length - 1; i >= 0; i--) {
+                const app = apples[i];
+                if (!app.sliced) {
+                  const diffApple = Math.abs(normalizeAngle(impactOffset - app.offsetAngle));
+                  if (diffApple < APPLE_COLLISION_ARC) {
+                    app.sliced = true;
+                    const appleWorldAngle = targetAngle + app.offsetAngle;
+                    const ax = TARGET_CENTER_X + Math.cos(appleWorldAngle) * TARGET_RADIUS;
+                    const ay = TARGET_CENTER_Y + Math.sin(appleWorldAngle) * TARGET_RADIUS;
+
+                    spawnAppleSlices(ax, ay);
+
+                    totalApples += 2;
+                    currentScore += 2;
+                    scoreTextEl.textContent = currentScore;
+                    localStorage.setItem('km_apples', totalApples.toString());
+                    appleCountTextEl.textContent = totalApples;
+                    titleAppleTallyEl.textContent = totalApples;
+
+                    apples.splice(i, 1);
+                  }
+                }
+              }
+
+              // Check stage completion
+              if (remainingKnives <= 0) {
+                triggerStageVictory();
+              }
+            }
+          }
+        }
+
+        // Update trail decay
+        for (let i = 0; i < activeKnife.trail.length; i++) {
+          activeKnife.trail[i].alpha -= dt * 2.5;
+        }
+
+        // Update Particles
+        for (let i = particles.length - 1; i >= 0; i--) {
+          const p = particles[i];
+          if (p.type === 'shockwave') {
+            p.radius += p.growth * dt;
+          } else {
+            p.x += p.vx * dt;
+            p.y += p.vy * dt;
+            p.vy += 650 * dt;
+            if (p.vRot) p.rot += p.vRot * dt;
+          }
+          p.alpha -= p.decay * dt;
+
+          if (p.alpha <= 0) particles.splice(i, 1);
+        }
+
+        // Update Apple Halves
+        for (let i = flyingHalves.length - 1; i >= 0; i--) {
+          const h = flyingHalves[i];
+          h.x += h.vx * dt;
+          h.y += h.vy * dt;
+          h.vy += 800 * dt;
+          h.rot += h.vRot * dt;
+          h.alpha -= 1.2 * dt;
+
+          if (h.alpha <= 0 || h.y > CANVAS_HEIGHT + 100) {
+            flyingHalves.splice(i, 1);
+          }
+        }
+
+        // Update Bouncing Deflected Knives
+        for (let i = bouncingKnives.length - 1; i >= 0; i--) {
+          const bk = bouncingKnives[i];
+          bk.x += bk.vx * dt;
+          bk.y += bk.vy * dt;
+          bk.vy += 1200 * dt;
+          bk.rot += bk.vRot * dt;
+
+          if (bk.y > CANVAS_HEIGHT + 150) {
+            bouncingKnives.splice(i, 1);
+          }
+        }
+
+        // Update Confetti
+        for (let i = confettiList.length - 1; i >= 0; i--) {
+          const c = confettiList[i];
+          c.x += c.vx * dt;
+          c.y += c.vy * dt;
+          c.vy += 320 * dt;
+          c.rot += c.vRot * dt;
+          c.alpha -= c.decay * dt;
+
+          if (c.alpha <= 0 || c.y > CANVAS_HEIGHT + 50) {
+            confettiList.splice(i, 1);
+          }
+        }
+
+        // Update Floating Texts
+        for (let i = floatingTexts.length - 1; i >= 0; i--) {
+          const ft = floatingTexts[i];
+          ft.y -= 45 * dt;
+          ft.alpha -= 1.1 * dt;
+          ft.scale += 0.3 * dt;
+          if (ft.alpha <= 0) floatingTexts.splice(i, 1);
+        }
+      }
+
+      // --- RENDERING ROUTINES ---
+      function render() {
+        ctx.save();
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Virtual Coordinate Transformation
+        ctx.translate(offsetX * dpr, offsetY * dpr);
+        ctx.scale(scale * dpr, scale * dpr);
+
+        ctx.beginPath();
+        ctx.rect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+        ctx.clip();
+
+        // Ambient radial light on target
+        renderAmbientTargetGlow();
+
+        // 1. Draw Rotating Log Target
+        renderTargetLog(TARGET_CENTER_X, TARGET_CENTER_Y + targetRecoilY, TARGET_RADIUS, targetAngle);
+
+        // 2. Draw Ready Knife (at bottom ready to throw, pointing UP towards the log)
+        if (gameState === 'playing' || gameState === 'title') {
+          if (!activeKnife.active && remainingKnives > 0) {
+            drawReadyKnife(TARGET_CENTER_X, KNIFE_READY_Y, equippedSkinId);
+          }
+        }
+
+        // 3. Draw Active Flying Knife
+        if (activeKnife.active) {
+          drawFlyingKnife(TARGET_CENTER_X, activeKnife.y, equippedSkinId);
+        }
+
+        // 4. Draw Bouncing Knives
+        for (let i = 0; i < bouncingKnives.length; i++) {
+          const bk = bouncingKnives[i];
+          ctx.save();
+          ctx.translate(bk.x, bk.y);
+          ctx.rotate(bk.rot);
+          drawSingleKnifeGeometry(0, 0, bk.skinId, 1);
+          ctx.restore();
+        }
+
+        // 5. Draw Apple Halves
+        for (let i = 0; i < flyingHalves.length; i++) {
+          drawAppleHalf(flyingHalves[i]);
+        }
+
+        // 6. Draw Particles (Splinters, Sparks, Juice)
+        renderParticles();
+
+        // 7. Draw Confetti
+        renderConfetti();
+
+        // 8. Draw Floating Texts
+        renderFloatingTexts();
+
+        ctx.restore();
+      }
+
+      function renderAmbientTargetGlow() {
+        const grad = ctx.createRadialGradient(
+          TARGET_CENTER_X, TARGET_CENTER_Y, 20,
+          TARGET_CENTER_X, TARGET_CENTER_Y, 300
+        );
+        grad.addColorStop(0, 'rgba(255, 140, 40, 0.12)');
+        grad.addColorStop(0.5, 'rgba(160, 60, 15, 0.04)');
+        grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+      }
+
+      // --- PROCEDURAL 3D TARGET RENDERING ---
+      function renderTargetLog(cx, cy, radius, rotAngle) {
+        ctx.save();
+        ctx.translate(cx, cy);
+
+        const isBoss = (stageNumber % 5 === 0);
+        const bossIdx = Math.floor(stageNumber / 5);
+        const depthHeight = 22;
+
+        // 1. Isometric 3D Side Depth Extrusion
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(0, depthHeight, radius + 2, 0, Math.PI);
+        ctx.lineTo(radius + 2, 0);
+        ctx.arc(0, 0, radius + 2, 0, Math.PI, true);
+        ctx.closePath();
+
+        const barkGrad = ctx.createLinearGradient(-radius, 0, radius, 0);
+        if (isBoss) {
+          if (bossIdx === 2) { // Molten
+            barkGrad.addColorStop(0, '#1c0e0b');
+            barkGrad.addColorStop(0.5, '#4a1e14');
+            barkGrad.addColorStop(1, '#1c0e0b');
+          } else if (bossIdx === 4) { // Cyber
+            barkGrad.addColorStop(0, '#0c1b24');
+            barkGrad.addColorStop(0.5, '#164e63');
+            barkGrad.addColorStop(1, '#0c1b24');
+          } else {
+            barkGrad.addColorStop(0, '#1a1b20');
+            barkGrad.addColorStop(0.5, '#3e414c');
+            barkGrad.addColorStop(1, '#151619');
+          }
+        } else {
+          barkGrad.addColorStop(0, '#2e190e');
+          barkGrad.addColorStop(0.3, '#5c351f');
+          barkGrad.addColorStop(0.7, '#3d2012');
+          barkGrad.addColorStop(1, '#201008');
+        }
+        ctx.fillStyle = barkGrad;
+        ctx.fill();
+
+        // Bark vertical furrow ridges
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
+        ctx.lineWidth = 1.5;
+        for (let x = -radius + 8; x < radius - 8; x += 14) {
+          ctx.beginPath();
+          ctx.moveTo(x, 2);
+          ctx.lineTo(x + 2, depthHeight - 1);
+          ctx.stroke();
+        }
+        ctx.restore();
+
+        // 2. Soft Bottom Drop Shadow
+        ctx.save();
+        ctx.beginPath();
+        ctx.ellipse(0, radius + depthHeight + 8, radius * 0.9, 14, 0, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+        ctx.filter = 'blur(6px)';
+        ctx.fill();
+        ctx.restore();
+
+        // 3. Rotate Context for Top Face & Attached Items
+        ctx.rotate(rotAngle);
+
+        // Top Face Outer Bark Rim
+        ctx.beginPath();
+        ctx.arc(0, 0, radius + 3, 0, Math.PI * 2);
+        ctx.fillStyle = isBoss ? '#292b34' : '#422413';
+        ctx.fill();
+
+        // Top Face Wood Base Cross Section
+        ctx.beginPath();
+        ctx.arc(0, 0, radius, 0, Math.PI * 2);
+
+        const faceGrad = ctx.createRadialGradient(0, 0, 5, 0, 0, radius);
+        if (isBoss) {
+          if (bossIdx === 2) {
+            faceGrad.addColorStop(0, '#ff5722');
+            faceGrad.addColorStop(0.4, '#b71c1c');
+            faceGrad.addColorStop(0.85, '#421010');
+            faceGrad.addColorStop(1, '#1a0505');
+          } else if (bossIdx === 4) {
+            faceGrad.addColorStop(0, '#06b6d4');
+            faceGrad.addColorStop(0.4, '#0f3d4c');
+            faceGrad.addColorStop(0.85, '#082029');
+            faceGrad.addColorStop(1, '#020c10');
+          } else {
+            faceGrad.addColorStop(0, '#782323');
+            faceGrad.addColorStop(0.4, '#481717');
+            faceGrad.addColorStop(0.85, '#2b1010');
+            faceGrad.addColorStop(1, '#170808');
+          }
+        } else {
+          faceGrad.addColorStop(0, '#ebaf6c');
+          faceGrad.addColorStop(0.45, '#c98544');
+          faceGrad.addColorStop(0.85, '#995927');
+          faceGrad.addColorStop(1, '#663613');
+        }
+        ctx.fillStyle = faceGrad;
+        ctx.fill();
+
+        // Growth Rings
+        ctx.lineWidth = 1.2;
+        const ringRadii = [radius * 0.22, radius * 0.42, radius * 0.62, radius * 0.82];
+        ringRadii.forEach((r, idx) => {
+          ctx.beginPath();
+          ctx.arc(0, 0, r, 0, Math.PI * 2);
+          ctx.strokeStyle = isBoss ? `rgba(255, 120, 120, ${0.18 + idx * 0.05})` : `rgba(80, 40, 15, ${0.25 + idx * 0.06})`;
+          ctx.stroke();
+        });
+
+        // Radial Natural Wood Cracks
+        ctx.strokeStyle = isBoss ? 'rgba(255, 100, 100, 0.45)' : 'rgba(60, 25, 10, 0.45)';
+        ctx.lineWidth = 2;
+        for (let a = 0; a < Math.PI * 2; a += Math.PI / 3) {
+          ctx.beginPath();
+          ctx.moveTo(Math.cos(a) * (radius * 0.15), Math.sin(a) * (radius * 0.15));
+          ctx.lineTo(Math.cos(a) * (radius * 0.75), Math.sin(a) * (radius * 0.75));
+          ctx.stroke();
+        }
+
+        // Center Wood Heart / Boss Medallion
+        if (isBoss) {
+          ctx.beginPath();
+          ctx.arc(0, 0, 24, 0, Math.PI * 2);
+          ctx.fillStyle = '#1c1d22';
+          ctx.fill();
+          ctx.lineWidth = 2.5;
+          ctx.strokeStyle = '#f59e0b';
+          ctx.stroke();
+
+          ctx.fillStyle = '#f59e0b';
+          ctx.font = 'bold 16px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('★', 0, 1);
+        } else {
+          ctx.beginPath();
+          ctx.arc(0, 0, 13, 0, Math.PI * 2);
+          ctx.fillStyle = '#4a250f';
+          ctx.fill();
+
+          ctx.beginPath();
+          ctx.arc(0, 0, 5, 0, Math.PI * 2);
+          ctx.fillStyle = '#2b1406';
+          ctx.fill();
+        }
+
+        // Outer Beveled Highlight Rim
+        ctx.beginPath();
+        ctx.arc(0, 0, radius - 1, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // 4. Draw Stuck Knives (Radially embedded, tip towards center, handle outwards)
+        for (let i = 0; i < stuckKnives.length; i++) {
+          const knife = stuckKnives[i];
+          ctx.save();
+          // To align with the standard geometry where knife extends along +Y:
+          // In world space, impact happens at bottom (angle PI/2).
+          // Rotating by (offsetAngle - PI/2) ensures the knife renders at the EXACT hit position!
+          ctx.rotate(knife.offsetAngle - Math.PI / 2);
+
+          // Embedded tip is at (0, radius - KNIFE_EMBED_DEPTH)
+          // Handle is at (0, radius - KNIFE_EMBED_DEPTH + KNIFE_TOTAL_LENGTH)
+          // Drop shadow on log
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+          ctx.fillRect(-6, radius - KNIFE_EMBED_DEPTH, 12, 28);
+
+          drawSingleKnifeGeometry(0, radius - KNIFE_EMBED_DEPTH, knife.skinId || equippedSkinId, 1);
+          ctx.restore();
+        }
+
+        // 5. Draw Apples on Log
+        for (let i = 0; i < apples.length; i++) {
+          const app = apples[i];
+          if (!app.sliced) {
+            ctx.save();
+            ctx.rotate(app.offsetAngle - Math.PI / 2);
+            drawAppleOnLog(0, radius);
+            ctx.restore();
+          }
+        }
+
+        ctx.restore();
+      }
+
+      // --- KNIFE RENDERING ROUTINES ---
+      // Get skin definition
+      function getSkin(id) {
+        return KNIFE_SKINS.find(s => s.id === id) || KNIFE_SKINS[0];
+      }
+
+      function getEquippedSkin() {
+        return getSkin(equippedSkinId);
+      }
+
+      // Ready Knife at bottom (tip pointing UPWARDS towards the log)
+      function drawReadyKnife(x, y, skinId) {
+        ctx.save();
+        ctx.translate(x, y);
+
+        const skin = getSkin(skinId);
+
+        // Glowing pulse aura
+        const aura = ctx.createRadialGradient(0, 30, 5, 0, 30, 48);
+        aura.addColorStop(0, skin.glowColor);
+        aura.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = aura;
+        ctx.fillRect(-48, -10, 96, 96);
+
+        // TIP IS AT (0, 0), HANDLE EXTENDS DOWNWARDS to (0, 82)
+        // Since +Y is down, tip is pointing UP towards the log!
+        drawSingleKnifeGeometry(0, 0, skinId, 1);
+        ctx.restore();
+      }
+
+      // Flying Knife in motion (tip pointing UPWARDS in flight direction)
+      function drawFlyingKnife(x, y, skinId) {
+        ctx.save();
+        ctx.translate(x, y);
+
+        const skin = getSkin(skinId);
+
+        // High-speed neon motion blur trail trailing behind handle (downwards)
+        const trailGrad = ctx.createLinearGradient(0, 50, 0, 130);
+        trailGrad.addColorStop(0, skin.glowColor);
+        trailGrad.addColorStop(0.5, 'rgba(255, 255, 255, 0.2)');
+        trailGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        ctx.fillStyle = trailGrad;
+        ctx.beginPath();
+        ctx.moveTo(-5, 50);
+        ctx.lineTo(5, 50);
+        ctx.lineTo(2, 130);
+        ctx.lineTo(-2, 130);
+        ctx.closePath();
+        ctx.fill();
+
+        // Draw knife right-side up (tip at (0, 0) pointing UP)
+        drawSingleKnifeGeometry(0, 0, skinId, 1);
+        ctx.restore();
+      }
+
+      /**
+       * PURE CANVAS 2D KNIFE GEOMETRY
+       * Coordinates: Tip is at (0, 0).
+       * Knife body extends along POSITIVE Y (y: 0 to 82).
+       * In canvas space, +Y is DOWN.
+       * Therefore: Tip is at the TOP (pointing UP at -Y), Handle is at the BOTTOM!
+       * Perfect physical orientation!
+       */
+      function drawSingleKnifeGeometry(x, y, skinId, scaleMult = 1) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(scaleMult, scaleMult);
+
+        const skin = getSkin(skinId);
+
+        // 1. Blade Body (y: 0 to 48)
+        // Tip is at (0, 0). Expands to width 14 at y=16, tapers slightly to y=48
+        ctx.beginPath();
+        ctx.moveTo(0, 0); // Sharp blade tip
+        ctx.lineTo(7, 16);
+        ctx.lineTo(6.5, 48);
+        ctx.lineTo(-6.5, 48);
+        ctx.lineTo(-7, 16);
+        ctx.closePath();
+
+        const bladeGrad = ctx.createLinearGradient(-7, 0, 7, 0);
+        bladeGrad.addColorStop(0, skin.bladeColors[0]);
+        bladeGrad.addColorStop(0.35, skin.bladeColors[1]);
+        bladeGrad.addColorStop(0.5, '#ffffff');
+        bladeGrad.addColorStop(0.7, skin.bladeColors[1]);
+        bladeGrad.addColorStop(1, skin.bladeColors[2]);
+        ctx.fillStyle = bladeGrad;
+        ctx.fill();
+
+        // Central Fuller Groove
+        ctx.beginPath();
+        ctx.moveTo(0, 10);
+        ctx.lineTo(0, 44);
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
+        ctx.lineWidth = 1.3;
+        ctx.stroke();
+
+        // Edge Highlight
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(7, 16);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+        ctx.lineWidth = 1.1;
+        ctx.stroke();
+
+        // 2. Crossguard (y: 48 to 53)
+        ctx.beginPath();
+        ctx.roundRect(-12, 48, 24, 5, 2);
+        const guardGrad = ctx.createLinearGradient(-12, 0, 12, 0);
+        guardGrad.addColorStop(0, skin.guardColor);
+        guardGrad.addColorStop(0.5, '#ffffff');
+        guardGrad.addColorStop(1, skin.guardColor);
+        ctx.fillStyle = guardGrad;
+        ctx.fill();
+
+        // 3. Handle Grip (y: 53 to 76)
+        ctx.beginPath();
+        ctx.roundRect(-4.5, 53, 9, 23, 2);
+        const handleGrad = ctx.createLinearGradient(-4.5, 0, 4.5, 0);
+        handleGrad.addColorStop(0, skin.handleColor);
+        handleGrad.addColorStop(0.5, '#5c351f');
+        handleGrad.addColorStop(1, skin.handleColor);
+        ctx.fillStyle = handleGrad;
+        ctx.fill();
+
+        // Handle Ribbed Texture
+        ctx.strokeStyle = 'rgba(255, 215, 0, 0.4)';
+        ctx.lineWidth = 1.2;
+        for (let hy = 57; hy <= 72; hy += 4.5) {
+          ctx.beginPath();
+          ctx.moveTo(-4, hy);
+          ctx.lineTo(4, hy);
+          ctx.stroke();
+        }
+
+        // 4. Pommel (y: 76 to 82)
+        ctx.beginPath();
+        ctx.roundRect(-6, 76, 12, 6, 2.5);
+        ctx.fillStyle = guardGrad;
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      // --- APPLE RENDERING ROUTINES ---
+      function drawAppleOnLog(x, logRadius) {
+        ctx.save();
+        ctx.translate(x, logRadius + 4);
+
+        // Drop shadow on log rim
+        ctx.beginPath();
+        ctx.ellipse(0, -6, 12, 6, 0, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+        ctx.fill();
+
+        // Stem
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.quadraticCurveTo(3, 8, 2, 14);
+        ctx.strokeStyle = '#5a341a';
+        ctx.lineWidth = 2.2;
+        ctx.stroke();
+
+        // Leaf
+        ctx.beginPath();
+        ctx.ellipse(5, 7, 6, 3, Math.PI / 4, 0, Math.PI * 2);
+        ctx.fillStyle = '#4ade80';
+        ctx.fill();
+        ctx.strokeStyle = '#22c55e';
+        ctx.lineWidth = 0.8;
+        ctx.stroke();
+
+        // Body
+        ctx.beginPath();
+        ctx.arc(-5, 0, 10, 0, Math.PI * 2);
+        ctx.arc(5, 0, 10, 0, Math.PI * 2);
+        ctx.arc(0, 3, 11, 0, Math.PI * 2);
+        ctx.closePath();
+
+        const appleGrad = ctx.createRadialGradient(-3, -3, 2, 0, 0, 14);
+        appleGrad.addColorStop(0, '#ff6b6b');
+        appleGrad.addColorStop(0.35, '#e11d48');
+        appleGrad.addColorStop(0.85, '#9f1239');
+        appleGrad.addColorStop(1, '#4c0519');
+        ctx.fillStyle = appleGrad;
+        ctx.fill();
+
+        // Specular highlight
+        ctx.beginPath();
+        ctx.ellipse(-4, -3, 4, 2, -Math.PI / 6, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      function drawAppleHalf(half) {
+        ctx.save();
+        ctx.translate(half.x, half.y);
+        ctx.rotate(half.rot);
+        ctx.globalAlpha = Math.max(0, half.alpha);
+
+        ctx.beginPath();
+        ctx.arc(0, 0, 12, 0, Math.PI);
+        ctx.fillStyle = '#be123c';
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(0, 0, 10, 0, Math.PI);
+        ctx.fillStyle = '#fef08a';
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.ellipse(0, 3, 2, 4, 0, 0, Math.PI * 2);
+        ctx.fillStyle = '#451a03';
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      // --- PARTICLES & EFFECTS RENDERING ---
+      function renderParticles() {
+        for (let i = 0; i < particles.length; i++) {
+          const p = particles[i];
+          ctx.save();
+          ctx.globalAlpha = Math.max(0, p.alpha);
+
+          if (p.type === 'splinter') {
+            ctx.translate(p.x, p.y);
+            ctx.rotate(p.rot);
+            ctx.fillStyle = p.color;
+            ctx.fillRect(-p.width / 2, -p.height / 2, p.width, p.height);
+          } else if (p.type === 'spark') {
+            ctx.strokeStyle = p.color;
+            ctx.lineWidth = 1.8;
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y);
+            const speed = Math.hypot(p.vx, p.vy);
+            const nx = p.vx / (speed || 1);
+            const ny = p.vy / (speed || 1);
+            ctx.lineTo(p.x - nx * p.len, p.y - ny * p.len);
+            ctx.stroke();
+          } else if (p.type === 'shockwave') {
+            ctx.strokeStyle = p.color;
+            ctx.lineWidth = p.lineWidth;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+            ctx.stroke();
+          } else if (p.type === 'juice') {
+            ctx.fillStyle = p.color;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          ctx.restore();
+        }
+      }
+
+      function renderConfetti() {
+        for (let i = 0; i < confettiList.length; i++) {
+          const c = confettiList[i];
+          ctx.save();
+          ctx.translate(c.x, c.y);
+          ctx.rotate(c.rot);
+          ctx.globalAlpha = Math.max(0, c.alpha);
+          ctx.fillStyle = c.color;
+          ctx.fillRect(-c.width / 2, -c.height / 2, c.width, c.height);
+          ctx.restore();
+        }
+      }
+
+      function renderFloatingTexts() {
+        for (let i = 0; i < floatingTexts.length; i++) {
+          const ft = floatingTexts[i];
+          ctx.save();
+          ctx.translate(ft.x, ft.y);
+          ctx.scale(ft.scale, ft.scale);
+          ctx.globalAlpha = Math.max(0, ft.alpha);
+          ctx.font = '900 18px system-ui, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillStyle = ft.color;
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
+          ctx.shadowBlur = 6;
+          ctx.fillText(ft.text, 0, 0);
+          ctx.restore();
+        }
+      }
+
+      // --- KNIFE ARMORY SHOP UI LOGIC ---
+      function openArmory() {
+        renderArmoryGrid();
+        armoryModalEl.classList.add('active');
+      }
+
+      function closeArmory() {
+        armoryModalEl.classList.remove('active');
+      }
+
+      function renderArmoryGrid() {
+        armoryGridEl.innerHTML = '';
+
+        KNIFE_SKINS.forEach(skin => {
+          const isUnlocked = unlockedSkins.includes(skin.id);
+          const isEquipped = equippedSkinId === skin.id;
+
+          const card = document.createElement('div');
+          card.className = `knife-card ${isEquipped ? 'equipped' : ''} ${!isUnlocked ? 'locked' : ''}`;
+
+          // SVG Mini Preview
+          const preview = `
+            <div class="knife-preview-box">
+              <svg viewBox="0 0 16 36" width="30" height="66">
+                <path d="M8 0 L11 12 L10 24 L6 24 L5 12 Z" fill="${skin.bladeColors[1]}" />
+                <rect x="3" y="24" width="10" height="2.5" rx="1" fill="${skin.guardColor}" />
+                <rect x="6.5" y="26.5" width="3" height="7" rx="0.8" fill="${skin.handleColor}" />
+                <ellipse cx="8" cy="34" rx="2" ry="1.2" fill="${skin.guardColor}" />
+              </svg>
+            </div>
+          `;
+
+          let statusText = '';
+          if (isEquipped) {
+            statusText = '<span class="knife-card-status equipped-badge">EQUIPPED</span>';
+          } else if (isUnlocked) {
+            statusText = '<span class="knife-card-status" style="color: #4ade80;">SELECT</span>';
+          } else {
+            statusText = `<span class="knife-card-status cost-badge">${skin.cost} 🍏</span>`;
+          }
+
+          card.innerHTML = `
+            ${preview}
+            <div class="knife-card-name">${skin.name}</div>
+            ${statusText}
+          `;
+
+          card.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (isUnlocked) {
+              equippedSkinId = skin.id;
+              localStorage.setItem('km_equipped_skin', equippedSkinId);
+              updateAmmoHUD();
+              renderArmoryGrid();
+            } else {
+              // Try to purchase
+              if (totalApples >= skin.cost) {
+                totalApples -= skin.cost;
+                unlockedSkins.push(skin.id);
+                equippedSkinId = skin.id;
+                localStorage.setItem('km_apples', totalApples.toString());
+                localStorage.setItem('km_unlocked_skins', JSON.stringify(unlockedSkins));
+                localStorage.setItem('km_equipped_skin', equippedSkinId);
+
+                appleCountTextEl.textContent = totalApples;
+                titleAppleTallyEl.textContent = totalApples;
+
+                audio.playVictory();
+                updateAmmoHUD();
+                renderArmoryGrid();
+              } else {
+                audio.playCollision();
+                card.style.transform = 'translateX(-5px)';
+                setTimeout(() => card.style.transform = 'translateX(5px)', 80);
+                setTimeout(() => card.style.transform = 'none', 160);
+              }
+            }
+          });
+
+          armoryGridEl.appendChild(card);
+        });
+      }
+
+      // Boot Engine
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
+      }
+    })();
+  </script>
+</body>
+</html>

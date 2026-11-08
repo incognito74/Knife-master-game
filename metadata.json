@@ -1,0 +1,8 @@
+{
+  "name": "Knife Master 3D Style",
+  "description": "Premium arcade knife throwing game with trigonometry-driven rotation physics, juicy wood impacts, apple slicing, and custom Web Audio synthesizer effects.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
