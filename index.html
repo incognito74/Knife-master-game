@@ -552,6 +552,93 @@
       color: #ff6b6b;
     }
 
+    /* Shop Tab Switcher */
+    .shop-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+      background: rgba(18, 10, 6, 0.7);
+      padding: 4px;
+      border-radius: 999px;
+      border: 1px solid rgba(120, 80, 50, 0.4);
+    }
+
+    .shop-tab-btn {
+      flex: 1;
+      background: transparent;
+      border: none;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      color: #b58d72;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .shop-tab-btn.active {
+      background: linear-gradient(180deg, #ff9e2b 0%, #db5e00 100%);
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(219, 94, 0, 0.4);
+    }
+
+    /* Background Theme Cards in Shop */
+    .theme-card {
+      background: rgba(22, 13, 8, 0.8);
+      border: 2px solid #573420;
+      border-radius: 14px;
+      padding: 8px 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      position: relative;
+      transition: transform 0.15s, border-color 0.2s, background 0.2s;
+    }
+
+    .theme-card:hover {
+      background: rgba(38, 23, 15, 0.9);
+      border-color: #a86c3d;
+      transform: translateY(-2px);
+    }
+
+    .theme-card.equipped {
+      border-color: #fbbf24;
+      background: linear-gradient(180deg, rgba(251, 191, 36, 0.18) 0%, rgba(35, 20, 10, 0.8) 100%);
+      box-shadow: 0 0 14px rgba(251, 191, 36, 0.4);
+    }
+
+    .theme-card.locked {
+      opacity: 0.55;
+      filter: grayscale(0.6);
+    }
+
+    .theme-preview-box {
+      width: 100%;
+      height: 52px;
+      border-radius: 8px;
+      margin-bottom: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .theme-card-name {
+      font-size: 11px;
+      font-weight: 800;
+      color: #eeddcc;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+      text-align: center;
+    }
+
+    /* Golden Apple Sparkle Animation */
+    @keyframes goldenSparkle {
+      0%, 100% { transform: scale(1); filter: drop-shadow(0 0 6px #ffd700); }
+      50% { transform: scale(1.08); filter: drop-shadow(0 0 14px #ffec3d) drop-shadow(0 0 4px #ffffff); }
+    }
+
     /* Pause Menu List */
     .pause-menu-list {
       display: flex;
@@ -751,16 +838,22 @@
       </div>
     </div>
 
-    <!-- 4. Knife Armory (Skins / Shop) Modal -->
+    <!-- 4. Knife Armory & Theme Shop Modal -->
     <div id="armory-modal" class="modal-backdrop">
       <div class="modal-card" style="max-width: 440px;">
-        <div class="modal-header" style="margin-bottom: 12px;">
-          <div class="modal-title-glory">Knife Armory</div>
-          <div class="modal-subtitle">Select or Unlock Blades</div>
+        <div class="modal-header" style="margin-bottom: 10px;">
+          <div class="modal-title-glory" id="armory-modal-title">Armory Shop</div>
+          <div class="modal-subtitle" id="armory-modal-subtitle">Unlock Blades & Themes</div>
+        </div>
+
+        <!-- Shop Tab Switcher -->
+        <div class="shop-tabs">
+          <button id="shop-tab-knives" class="shop-tab-btn active">🗡️ BLADES</button>
+          <button id="shop-tab-themes" class="shop-tab-btn">🎨 THEMES</button>
         </div>
 
         <div id="armory-grid" class="armory-scroll">
-          <!-- Dynamically populated knife cards -->
+          <!-- Dynamically populated knife or theme cards -->
         </div>
 
         <button id="btn-close-armory" class="btn-cta">
@@ -840,6 +933,60 @@
           handleColor: '#431407',
           glowColor: 'rgba(249, 115, 22, 0.9)',
           description: 'Imbued with the eternal flame of wyverns.'
+        }
+      ];
+
+      // --- BACKGROUND THEMES DATABASE ---
+      const BACKGROUND_THEMES = [
+        {
+          id: 'classic_wood',
+          name: 'Dark Forge',
+          cost: 0,
+          containerBg: 'radial-gradient(circle at 50% 25%, #2c1a11 0%, #150d09 55%, #070403 100%)',
+          canvasGlow1: 'rgba(255, 140, 40, 0.12)',
+          canvasGlow2: 'rgba(160, 60, 15, 0.04)',
+          topBarGlow: 'radial-gradient(ellipse at 50% 0%, rgba(255, 140, 40, 0.16) 0%, transparent 70%)',
+          previewColor: 'linear-gradient(135deg, #3d2315 0%, #170d08 100%)'
+        },
+        {
+          id: 'cyber_neon',
+          name: 'Cyberpunk Neon',
+          cost: 25,
+          containerBg: 'radial-gradient(circle at 50% 25%, #0d2838 0%, #06131c 55%, #02070b 100%)',
+          canvasGlow1: 'rgba(6, 182, 212, 0.18)',
+          canvasGlow2: 'rgba(14, 116, 144, 0.05)',
+          topBarGlow: 'radial-gradient(ellipse at 50% 0%, rgba(6, 182, 212, 0.22) 0%, transparent 70%)',
+          previewColor: 'linear-gradient(135deg, #0e7490 0%, #031520 100%)'
+        },
+        {
+          id: 'lava_hell',
+          name: 'Volcanic Core',
+          cost: 50,
+          containerBg: 'radial-gradient(circle at 50% 25%, #3d120a 0%, #1a0604 55%, #090202 100%)',
+          canvasGlow1: 'rgba(239, 68, 68, 0.2)',
+          canvasGlow2: 'rgba(153, 27, 27, 0.06)',
+          topBarGlow: 'radial-gradient(ellipse at 50% 0%, rgba(239, 68, 68, 0.25) 0%, transparent 70%)',
+          previewColor: 'linear-gradient(135deg, #b91c1c 0%, #1f0404 100%)'
+        },
+        {
+          id: 'emerald_forest',
+          name: 'Mystic Jade',
+          cost: 75,
+          containerBg: 'radial-gradient(circle at 50% 25%, #062e1e 0%, #03170f 55%, #010805 100%)',
+          canvasGlow1: 'rgba(16, 185, 129, 0.2)',
+          canvasGlow2: 'rgba(4, 120, 87, 0.06)',
+          topBarGlow: 'radial-gradient(ellipse at 50% 0%, rgba(16, 185, 129, 0.22) 0%, transparent 70%)',
+          previewColor: 'linear-gradient(135deg, #047857 0%, #021a10 100%)'
+        },
+        {
+          id: 'galaxy_void',
+          name: 'Cosmic Nebula',
+          cost: 120,
+          containerBg: 'radial-gradient(circle at 50% 25%, #23123d 0%, #110721 55%, #05020c 100%)',
+          canvasGlow1: 'rgba(168, 85, 247, 0.22)',
+          canvasGlow2: 'rgba(107, 33, 168, 0.06)',
+          topBarGlow: 'radial-gradient(ellipse at 50% 0%, rgba(168, 85, 247, 0.26) 0%, transparent 70%)',
+          previewColor: 'linear-gradient(135deg, #7e22ce 0%, #140526 100%)'
         }
       ];
 
@@ -1084,6 +1231,9 @@
       let totalApples = parseInt(localStorage.getItem('km_apples') || '0', 10);
       let unlockedSkins = JSON.parse(localStorage.getItem('km_unlocked_skins') || '["classic"]');
       let equippedSkinId = localStorage.getItem('km_equipped_skin') || 'classic';
+      let unlockedThemes = JSON.parse(localStorage.getItem('km_unlocked_themes') || '["classic_wood"]');
+      let equippedThemeId = localStorage.getItem('km_equipped_theme') || 'classic_wood';
+      let currentShopTab = 'knives'; // 'knives' | 'themes'
 
       // --- GAME STATE ---
       let gameState = 'title'; // 'title' | 'playing' | 'paused' | 'gameover' | 'victory_pause'
@@ -1100,8 +1250,8 @@
       // Stage Target items
       let totalKnivesToThrow = 7;
       let remainingKnives = 7;
-      let stuckKnives = []; // Array of { offsetAngle, type: 'initial'|'wood' }
-      let apples = [];      // Array of { offsetAngle, sliced: boolean }
+      let stuckKnives = []; // Array of { offsetAngle, type: 'initial'|'wood', skinId }
+      let apples = [];      // Array of { offsetAngle, sliced: boolean, isGolden: boolean }
 
       // Active player knife
       let activeKnife = {
@@ -1129,6 +1279,8 @@
 
       // DOM Elements
       let canvas, ctx, shakeWrapper;
+      const gameContainerEl = document.getElementById('game-container');
+      const ambientGlowTopEl = document.querySelector('.ambient-glow-top');
       const stageBadgeEl = document.getElementById('stage-badge');
       const scoreTextEl = document.getElementById('score-text');
       const appleChipEl = document.getElementById('apple-chip');
@@ -1149,6 +1301,8 @@
       const gameoverStageEl = document.getElementById('gameover-stage');
       const gameoverScoreEl = document.getElementById('gameover-score');
       const armoryGridEl = document.getElementById('armory-grid');
+      const shopTabKnivesBtn = document.getElementById('shop-tab-knives');
+      const shopTabThemesBtn = document.getElementById('shop-tab-themes');
 
       // Buttons
       const btnStartPlay = document.getElementById('btn-start-play');
@@ -1171,6 +1325,20 @@
       let scale = 1;
       let offsetX = 0;
       let offsetY = 0;
+
+      function getEquippedTheme() {
+        return BACKGROUND_THEMES.find(t => t.id === equippedThemeId) || BACKGROUND_THEMES[0];
+      }
+
+      function applyTheme() {
+        const theme = getEquippedTheme();
+        if (gameContainerEl) {
+          gameContainerEl.style.background = theme.containerBg;
+        }
+        if (ambientGlowTopEl) {
+          ambientGlowTopEl.style.background = theme.topBarGlow;
+        }
+      }
 
       // --- INITIALIZATION ---
       function init() {
@@ -1270,10 +1438,25 @@
           }
         });
 
-        btnCloseArmory.addEventListener('click', (e) => {
+        // Shop Tab buttons
+        shopTabKnivesBtn.addEventListener('click', (e) => {
           e.stopPropagation();
-          closeArmory();
+          currentShopTab = 'knives';
+          shopTabKnivesBtn.classList.add('active');
+          shopTabThemesBtn.classList.remove('active');
+          renderArmoryGrid();
         });
+
+        shopTabThemesBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          currentShopTab = 'themes';
+          shopTabThemesBtn.classList.add('active');
+          shopTabKnivesBtn.classList.remove('active');
+          renderArmoryGrid();
+        });
+
+        // Initialize active theme
+        applyTheme();
 
         // Sync initial storage UI
         titleBestScoreEl.textContent = highScore;
@@ -1374,7 +1557,9 @@
                      apples.every(app => Math.abs(normalizeAngle(appleAngle - app.offsetAngle)) > 0.45);
             }
             if (safe) {
-              apples.push({ offsetAngle: appleAngle, sliced: false });
+              // Rare golden apple chance (22% chance, gives +10 apples!)
+              const isGolden = Math.random() < 0.22;
+              apples.push({ offsetAngle: appleAngle, sliced: false, isGolden: isGolden });
             }
           }
         }
@@ -1624,9 +1809,9 @@
         }
       }
 
-      function spawnAppleSlices(x, y) {
+      function spawnAppleSlices(x, y, isGolden = false) {
         audio.playAppleSlice();
-        triggerHaptic([25, 20, 35]);
+        triggerHaptic(isGolden ? [30, 30, 50, 40] : [25, 20, 35]);
 
         // Apple bouncy animation on HUD
         appleChipEl.classList.add('bounce');
@@ -1639,6 +1824,7 @@
           vy: -90 - Math.random() * 90,
           rot: 0,
           vRot: -6 - Math.random() * 5,
+          isGolden: isGolden,
           alpha: 1
         });
         flyingHalves.push({
@@ -1648,19 +1834,22 @@
           vy: -90 - Math.random() * 90,
           rot: 0,
           vRot: 6 + Math.random() * 5,
+          isGolden: isGolden,
           alpha: 1
         });
 
-        for (let i = 0; i < 26; i++) {
+        // Juice and sparkles
+        const count = isGolden ? 36 : 26;
+        for (let i = 0; i < count; i++) {
           const angle = Math.random() * Math.PI * 2;
-          const speed = 90 + Math.random() * 240;
+          const speed = (isGolden ? 120 : 90) + Math.random() * (isGolden ? 300 : 240);
           particles.push({
             x: x,
             y: y,
             vx: Math.cos(angle) * speed,
             vy: Math.sin(angle) * speed,
             radius: 2 + Math.random() * 4.5,
-            color: Math.random() > 0.4 ? '#e61d1d' : '#ff4444',
+            color: isGolden ? (Math.random() > 0.3 ? '#fbbf24' : '#fef08a') : (Math.random() > 0.4 ? '#e61d1d' : '#ff4444'),
             alpha: 1,
             decay: 1.8 + Math.random() * 1.5,
             type: 'juice'
@@ -1670,10 +1859,10 @@
         floatingTexts.push({
           x: x,
           y: y - 10,
-          text: '+2 🍏',
-          color: '#ff4d4d',
+          text: isGolden ? '+10 🌟 GOLDEN!' : '+2 🍏',
+          color: isGolden ? '#fbbf24' : '#ff4d4d',
           alpha: 1,
-          scale: 1.1
+          scale: isGolden ? 1.3 : 1.1
         });
       }
 
@@ -1823,10 +2012,12 @@
                     const ax = TARGET_CENTER_X + Math.cos(appleWorldAngle) * TARGET_RADIUS;
                     const ay = TARGET_CENTER_Y + Math.sin(appleWorldAngle) * TARGET_RADIUS;
 
-                    spawnAppleSlices(ax, ay);
+                    const isGolden = !!app.isGolden;
+                    spawnAppleSlices(ax, ay, isGolden);
 
-                    totalApples += 2;
-                    currentScore += 2;
+                    const appleReward = isGolden ? 10 : 2;
+                    totalApples += appleReward;
+                    currentScore += appleReward;
                     scoreTextEl.textContent = currentScore;
                     localStorage.setItem('km_apples', totalApples.toString());
                     appleCountTextEl.textContent = totalApples;
@@ -1976,12 +2167,13 @@
       }
 
       function renderAmbientTargetGlow() {
+        const theme = getEquippedTheme();
         const grad = ctx.createRadialGradient(
           TARGET_CENTER_X, TARGET_CENTER_Y, 20,
           TARGET_CENTER_X, TARGET_CENTER_Y, 300
         );
-        grad.addColorStop(0, 'rgba(255, 140, 40, 0.12)');
-        grad.addColorStop(0.5, 'rgba(160, 60, 15, 0.04)');
+        grad.addColorStop(0, theme.canvasGlow1);
+        grad.addColorStop(0.5, theme.canvasGlow2);
         grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
@@ -2167,7 +2359,7 @@
           if (!app.sliced) {
             ctx.save();
             ctx.rotate(app.offsetAngle - Math.PI / 2);
-            drawAppleOnLog(0, radius);
+            drawAppleOnLog(0, radius, !!app.isGolden);
             ctx.restore();
           }
         }
@@ -2321,9 +2513,20 @@
       }
 
       // --- APPLE RENDERING ROUTINES ---
-      function drawAppleOnLog(x, logRadius) {
+      function drawAppleOnLog(x, logRadius, isGolden = false) {
         ctx.save();
         ctx.translate(x, logRadius + 4);
+
+        // Golden aura pulse if golden apple
+        if (isGolden) {
+          const auraGrad = ctx.createRadialGradient(0, 0, 4, 0, 0, 22);
+          auraGrad.addColorStop(0, 'rgba(251, 191, 36, 0.45)');
+          auraGrad.addColorStop(1, 'rgba(251, 191, 36, 0)');
+          ctx.fillStyle = auraGrad;
+          ctx.beginPath();
+          ctx.arc(0, 0, 22, 0, Math.PI * 2);
+          ctx.fill();
+        }
 
         // Drop shadow on log rim
         ctx.beginPath();
@@ -2335,16 +2538,16 @@
         ctx.beginPath();
         ctx.moveTo(0, 0);
         ctx.quadraticCurveTo(3, 8, 2, 14);
-        ctx.strokeStyle = '#5a341a';
+        ctx.strokeStyle = isGolden ? '#78350f' : '#5a341a';
         ctx.lineWidth = 2.2;
         ctx.stroke();
 
         // Leaf
         ctx.beginPath();
         ctx.ellipse(5, 7, 6, 3, Math.PI / 4, 0, Math.PI * 2);
-        ctx.fillStyle = '#4ade80';
+        ctx.fillStyle = isGolden ? '#fef08a' : '#4ade80';
         ctx.fill();
-        ctx.strokeStyle = '#22c55e';
+        ctx.strokeStyle = isGolden ? '#f59e0b' : '#22c55e';
         ctx.lineWidth = 0.8;
         ctx.stroke();
 
@@ -2356,17 +2559,24 @@
         ctx.closePath();
 
         const appleGrad = ctx.createRadialGradient(-3, -3, 2, 0, 0, 14);
-        appleGrad.addColorStop(0, '#ff6b6b');
-        appleGrad.addColorStop(0.35, '#e11d48');
-        appleGrad.addColorStop(0.85, '#9f1239');
-        appleGrad.addColorStop(1, '#4c0519');
+        if (isGolden) {
+          appleGrad.addColorStop(0, '#ffffff');
+          appleGrad.addColorStop(0.25, '#fef08a');
+          appleGrad.addColorStop(0.65, '#f59e0b');
+          appleGrad.addColorStop(1, '#b45309');
+        } else {
+          appleGrad.addColorStop(0, '#ff6b6b');
+          appleGrad.addColorStop(0.35, '#e11d48');
+          appleGrad.addColorStop(0.85, '#9f1239');
+          appleGrad.addColorStop(1, '#4c0519');
+        }
         ctx.fillStyle = appleGrad;
         ctx.fill();
 
         // Specular highlight
         ctx.beginPath();
         ctx.ellipse(-4, -3, 4, 2, -Math.PI / 6, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
         ctx.fill();
 
         ctx.restore();
@@ -2378,19 +2588,24 @@
         ctx.rotate(half.rot);
         ctx.globalAlpha = Math.max(0, half.alpha);
 
+        const isGolden = !!half.isGolden;
+
+        // Outer skin
         ctx.beginPath();
         ctx.arc(0, 0, 12, 0, Math.PI);
-        ctx.fillStyle = '#be123c';
+        ctx.fillStyle = isGolden ? '#d97706' : '#be123c';
         ctx.fill();
 
+        // Cut face flesh
         ctx.beginPath();
         ctx.arc(0, 0, 10, 0, Math.PI);
-        ctx.fillStyle = '#fef08a';
+        ctx.fillStyle = isGolden ? '#fffbeb' : '#fef08a';
         ctx.fill();
 
+        // Core and seed
         ctx.beginPath();
         ctx.ellipse(0, 3, 2, 4, 0, 0, Math.PI * 2);
-        ctx.fillStyle = '#451a03';
+        ctx.fillStyle = isGolden ? '#78350f' : '#451a03';
         ctx.fill();
 
         ctx.restore();
@@ -2478,74 +2693,138 @@
       function renderArmoryGrid() {
         armoryGridEl.innerHTML = '';
 
-        KNIFE_SKINS.forEach(skin => {
-          const isUnlocked = unlockedSkins.includes(skin.id);
-          const isEquipped = equippedSkinId === skin.id;
+        if (currentShopTab === 'knives') {
+          KNIFE_SKINS.forEach(skin => {
+            const isUnlocked = unlockedSkins.includes(skin.id);
+            const isEquipped = equippedSkinId === skin.id;
 
-          const card = document.createElement('div');
-          card.className = `knife-card ${isEquipped ? 'equipped' : ''} ${!isUnlocked ? 'locked' : ''}`;
+            const card = document.createElement('div');
+            card.className = `knife-card ${isEquipped ? 'equipped' : ''} ${!isUnlocked ? 'locked' : ''}`;
 
-          // SVG Mini Preview
-          const preview = `
-            <div class="knife-preview-box">
-              <svg viewBox="0 0 16 36" width="30" height="66">
-                <path d="M8 0 L11 12 L10 24 L6 24 L5 12 Z" fill="${skin.bladeColors[1]}" />
-                <rect x="3" y="24" width="10" height="2.5" rx="1" fill="${skin.guardColor}" />
-                <rect x="6.5" y="26.5" width="3" height="7" rx="0.8" fill="${skin.handleColor}" />
-                <ellipse cx="8" cy="34" rx="2" ry="1.2" fill="${skin.guardColor}" />
-              </svg>
-            </div>
-          `;
+            // SVG Mini Preview
+            const preview = `
+              <div class="knife-preview-box">
+                <svg viewBox="0 0 16 36" width="30" height="66">
+                  <path d="M8 0 L11 12 L10 24 L6 24 L5 12 Z" fill="${skin.bladeColors[1]}" />
+                  <rect x="3" y="24" width="10" height="2.5" rx="1" fill="${skin.guardColor}" />
+                  <rect x="6.5" y="26.5" width="3" height="7" rx="0.8" fill="${skin.handleColor}" />
+                  <ellipse cx="8" cy="34" rx="2" ry="1.2" fill="${skin.guardColor}" />
+                </svg>
+              </div>
+            `;
 
-          let statusText = '';
-          if (isEquipped) {
-            statusText = '<span class="knife-card-status equipped-badge">EQUIPPED</span>';
-          } else if (isUnlocked) {
-            statusText = '<span class="knife-card-status" style="color: #4ade80;">SELECT</span>';
-          } else {
-            statusText = `<span class="knife-card-status cost-badge">${skin.cost} 🍏</span>`;
-          }
-
-          card.innerHTML = `
-            ${preview}
-            <div class="knife-card-name">${skin.name}</div>
-            ${statusText}
-          `;
-
-          card.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (isUnlocked) {
-              equippedSkinId = skin.id;
-              localStorage.setItem('km_equipped_skin', equippedSkinId);
-              updateAmmoHUD();
-              renderArmoryGrid();
+            let statusText = '';
+            if (isEquipped) {
+              statusText = '<span class="knife-card-status equipped-badge">EQUIPPED</span>';
+            } else if (isUnlocked) {
+              statusText = '<span class="knife-card-status" style="color: #4ade80;">SELECT</span>';
             } else {
-              // Try to purchase
-              if (totalApples >= skin.cost) {
-                totalApples -= skin.cost;
-                unlockedSkins.push(skin.id);
+              statusText = `<span class="knife-card-status cost-badge">${skin.cost} 🍏</span>`;
+            }
+
+            card.innerHTML = `
+              ${preview}
+              <div class="knife-card-name">${skin.name}</div>
+              ${statusText}
+            `;
+
+            card.addEventListener('click', (e) => {
+              e.stopPropagation();
+              if (isUnlocked) {
                 equippedSkinId = skin.id;
-                localStorage.setItem('km_apples', totalApples.toString());
-                localStorage.setItem('km_unlocked_skins', JSON.stringify(unlockedSkins));
                 localStorage.setItem('km_equipped_skin', equippedSkinId);
-
-                appleCountTextEl.textContent = totalApples;
-                titleAppleTallyEl.textContent = totalApples;
-
-                audio.playVictory();
                 updateAmmoHUD();
                 renderArmoryGrid();
               } else {
-                audio.playCollision();
-                card.style.transform = 'translateX(-5px)';
-                setTimeout(() => card.style.transform = 'translateX(5px)', 80);
-                setTimeout(() => card.style.transform = 'none', 160);
-              }
-            }
-          });
+                // Try to purchase
+                if (totalApples >= skin.cost) {
+                  totalApples -= skin.cost;
+                  unlockedSkins.push(skin.id);
+                  equippedSkinId = skin.id;
+                  localStorage.setItem('km_apples', totalApples.toString());
+                  localStorage.setItem('km_unlocked_skins', JSON.stringify(unlockedSkins));
+                  localStorage.setItem('km_equipped_skin', equippedSkinId);
 
-          armoryGridEl.appendChild(card);
-        });
+                  appleCountTextEl.textContent = totalApples;
+                  titleAppleTallyEl.textContent = totalApples;
+
+                  audio.playVictory();
+                  updateAmmoHUD();
+                  renderArmoryGrid();
+                } else {
+                  audio.playCollision();
+                  card.style.transform = 'translateX(-5px)';
+                  setTimeout(() => card.style.transform = 'translateX(5px)', 80);
+                  setTimeout(() => card.style.transform = 'none', 160);
+                }
+              }
+            });
+
+            armoryGridEl.appendChild(card);
+          });
+        } else {
+          // Render Background Themes Tab
+          BACKGROUND_THEMES.forEach(theme => {
+            const isUnlocked = unlockedThemes.includes(theme.id);
+            const isEquipped = equippedThemeId === theme.id;
+
+            const card = document.createElement('div');
+            card.className = `theme-card ${isEquipped ? 'equipped' : ''} ${!isUnlocked ? 'locked' : ''}`;
+
+            const preview = `
+              <div class="theme-preview-box" style="background: ${theme.previewColor};"></div>
+            `;
+
+            let statusText = '';
+            if (isEquipped) {
+              statusText = '<span class="knife-card-status equipped-badge">ACTIVE</span>';
+            } else if (isUnlocked) {
+              statusText = '<span class="knife-card-status" style="color: #4ade80;">APPLY</span>';
+            } else {
+              statusText = `<span class="knife-card-status cost-badge">${theme.cost} 🍏</span>`;
+            }
+
+            card.innerHTML = `
+              ${preview}
+              <div class="theme-card-name">${theme.name}</div>
+              ${statusText}
+            `;
+
+            card.addEventListener('click', (e) => {
+              e.stopPropagation();
+              if (isUnlocked) {
+                equippedThemeId = theme.id;
+                localStorage.setItem('km_equipped_theme', equippedThemeId);
+                applyTheme();
+                renderArmoryGrid();
+              } else {
+                // Try to purchase theme
+                if (totalApples >= theme.cost) {
+                  totalApples -= theme.cost;
+                  unlockedThemes.push(theme.id);
+                  equippedThemeId = theme.id;
+                  localStorage.setItem('km_apples', totalApples.toString());
+                  localStorage.setItem('km_unlocked_themes', JSON.stringify(unlockedThemes));
+                  localStorage.setItem('km_equipped_theme', equippedThemeId);
+
+                  appleCountTextEl.textContent = totalApples;
+                  titleAppleTallyEl.textContent = totalApples;
+
+                  audio.playVictory();
+                  applyTheme();
+                  renderArmoryGrid();
+                } else {
+                  audio.playCollision();
+                  card.style.transform = 'translateX(-5px)';
+                  setTimeout(() => card.style.transform = 'translateX(5px)', 80);
+                  setTimeout(() => card.style.transform = 'none', 160);
+                }
+              }
+            });
+
+            armoryGridEl.appendChild(card);
+          });
+        }
       }
 
       // Boot Engine
